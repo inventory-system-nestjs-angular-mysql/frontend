@@ -1,0 +1,1008 @@
+<p-toast />
+<p-confirmdialog [style]="{ width: '450px' }" />
+
+<p-toolbar styleClass="mb-6">
+    <ng-template #start>
+        <p-button label="New" icon="pi pi-plus" severity="secondary" class="mr-2" (onClick)="openNew()" />
+        <p-button severity="secondary" label="Delete" icon="pi pi-trash" outlined (onClick)="deleteSelectedStocks()" [disabled]="!selectedStocks || !selectedStocks.length" />
+    </ng-template>
+    <ng-template #end>
+        <p-button label="Export" icon="pi pi-upload" severity="secondary" (onClick)="dt.exportCSV()" />
+    </ng-template>
+</p-toolbar>
+
+<p-table
+    #dt
+    [value]="stocks()"
+    [rows]="10"
+    [columns]="cols"
+    [paginator]="true"
+    [globalFilterFields]="['cSTKpk', 'stockName', 'stockGroupId', 'brand']"
+    [tableStyle]="{ 'min-width': '50rem' }"
+    [(selection)]="selectedStocks"
+    [rowHover]="true"
+    dataKey="cSTKpk"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} stocks"
+    [showCurrentPageReport]="true"
+    [rowsPerPageOptions]="[10, 20, 30]"
+>
+    <ng-template #caption>
+        <div class="flex items-center justify-between">
+            <h5 class="m-0">Manage Stocks</h5>
+            <p-iconfield>
+                <p-inputicon styleClass="pi pi-search" />
+                <input pInputText type="text" (input)="dt.filterGlobal($event.target.value, 'contains')" placeholder="Search..." />
+            </p-iconfield>
+        </div>
+    </ng-template>
+    <ng-template #header>
+        <tr>
+            <th style="width: 3rem">
+                <p-tableHeaderCheckbox />
+            </th>
+            <th style="min-width: 8rem">Code</th>
+            <th style="min-width: 16rem">Stock Name</th>
+            <th style="min-width: 12rem">Group</th>
+            <th style="min-width: 10rem">Brand</th>
+            <th style="min-width: 10rem">Purchase Price</th>
+            <th style="min-width: 8rem">Tax</th>
+            <th style="min-width: 8rem"></th>
+        </tr>
+    </ng-template>
+    <ng-template #body let-stock>
+        <tr>
+            <td style="width: 3rem">
+                <p-tableCheckbox [value]="stock" />
+            </td>
+            <td>{{ stock.cSTKpk }}</td>
+            <td>{{ stock.stockName }}</td>
+            <td>{{ getGroupName(stock.stockGroupId) }}</td>
+            <td>{{ stock.brand }}</td>
+            <td>{{ stock.purchasePrice | number }}</td>
+            <td>
+                <p-tag [value]="stock.taxOption" [severity]="stock.taxOption === 'Tax' ? 'success' : 'info'" />
+            </td>
+            <td>
+                <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true" (click)="editStock(stock)" />
+                <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true" (click)="deleteStock(stock)" />
+            </td>
+        </tr>
+    </ng-template>
+</p-table>
+
+<p-dialog [(visible)]="stockDialog" [style]="{ width: '95vw', maxWidth: '1400px' }" [modal]="true" [closable]="true" [draggable]="false" [resizable]="true">
+    <ng-template #header>
+        <div class="flex items-center gap-2">
+            <i class="pi pi-box text-2xl"></i>
+            <span class="font-bold text-xl">Stock Details</span>
+        </div>
+    </ng-template>
+    <ng-template #content>
+        <p-tabs value="0">
+            <p-tablist>
+                <p-tab value="0">Stock</p-tab>
+                <p-tab value="1" disabled>Markup</p-tab>
+                <p-tab value="2" disabled>Misc</p-tab>
+                <p-tab value="3" disabled>Price/Qty</p-tab>
+                <p-tab value="4" disabled>Purchase Price</p-tab>
+                <p-tab value="5" disabled>POS</p-tab>
+                <p-tab value="6" disabled>Commission</p-tab>
+                <p-tab value="7" disabled>Kitchen Printer</p-tab>
+                <p-tab value="8" disabled>Mapping</p-tab>
+            </p-tablist>
+            <p-tabpanels>
+                <p-tabpanel value="0">
+                <div class="grid grid-cols-12 gap-6 mt-4">
+                    <!-- Left Column - Stock Details -->
+                    <div class="col-span-12 lg:col-span-7">
+                        <div class="card">
+                            <h6 class="mb-4 font-semibold text-lg">Stock Information</h6>
+                            <div class="grid grid-cols-12 gap-4">
+                                <!-- Stock Name -->
+                                <div class="col-span-12">
+                                    <label for="stockName" class="block font-bold mb-2">Stock Name <span class="text-red-500">*</span></label>
+                                    <input type="text" pInputText id="stockName" [(ngModel)]="stock.stockName" required autofocus fluid class="w-full" />
+                                    <small class="text-red-500" *ngIf="submitted && !stock.stockName">Stock Name is required.</small>
+                                </div>
+
+                                <!-- Group -->
+                                <div class="col-span-12 md:col-span-6">
+                                    <label for="group" class="block font-bold mb-2">Group</label>
+                                    <p-select
+                                        [(ngModel)]="stock.stockGroupId"
+                                        [options]="stockGroups()"
+                                        optionLabel="description"
+                                        optionValue="id"
+                                        placeholder="Select Group"
+                                        fluid
+                                        [showClear]="true"
+                                    />
+                                </div>
+
+                                <!-- Min / Max Stock -->
+                                <div class="col-span-6 md:col-span-3">
+                                    <label for="minStock" class="block font-bold mb-2">Min Stock</label>
+                                    <p-inputnumber id="minStock" [(ngModel)]="stock.minStock" mode="decimal" [min]="0" fluid />
+                                </div>
+
+                                <div class="col-span-6 md:col-span-3">
+                                    <label for="maxStock" class="block font-bold mb-2">Max Stock</label>
+                                    <p-inputnumber id="maxStock" [(ngModel)]="stock.maxStock" mode="decimal" [min]="0" fluid />
+                                </div>
+
+                                <!-- Order Multiplies -->
+                                <div class="col-span-12 md:col-span-6">
+                                    <label for="orderMultiplies" class="block font-bold mb-2">Order Multiplies <span class="text-muted-color text-sm">(0 = N/A)</span></label>
+                                    <p-inputnumber id="orderMultiplies" mode="decimal" [min]="0" fluid />
+                                </div>
+
+                                <!-- Purchase Price -->
+                                <div class="col-span-12 md:col-span-6">
+                                    <label for="purchasePrice" class="block font-bold mb-2">Purchase Price</label>
+                                    <div class="flex gap-2">
+                                        <p-inputnumber id="purchasePrice" [(ngModel)]="stock.purchasePrice" mode="decimal" [min]="0" [useGrouping]="true" fluid class="flex-1" />
+                                        <span class="flex items-center px-3 bg-surface-100 dark:bg-surface-800 rounded-border">$</span>
+                                        <p-inputnumber id="purchasePriceDollar" [(ngModel)]="stock.purchasePriceDollar" mode="decimal" [min]="0" [maxFractionDigits]="2" fluid class="flex-1" />
+                                    </div>
+                                </div>
+
+                                <!-- Extra Fee -->
+                                <div class="col-span-12 md:col-span-6">
+                                    <label for="extraFee" class="block font-bold mb-2">Extra Fee</label>
+                                    <div class="flex gap-2">
+                                        <p-inputnumber id="extraFee" [(ngModel)]="stock.extraFee" mode="decimal" [min]="0" [useGrouping]="true" fluid class="flex-1" />
+                                        <span class="flex items-center px-3 bg-surface-100 dark:bg-surface-800 rounded-border">$</span>
+                                        <p-inputnumber id="extraFeeDollar" [(ngModel)]="stock.extraFeeDollar" mode="decimal" [min]="0" [maxFractionDigits]="2" fluid class="flex-1" />
+                                    </div>
+                                </div>
+
+                                <!-- COGS -->
+                                <div class="col-span-12 md:col-span-6">
+                                    <label for="cogs" class="block font-bold mb-2">
+                                        COGS
+                                        <i class="pi pi-question-circle text-blue-500 ml-2 cursor-pointer" pTooltip="Cost of Goods Sold" tooltipPosition="top"></i>
+                                    </label>
+                                    <div class="flex gap-2">
+                                        <p-inputnumber id="cogs" [(ngModel)]="stock.cogs" mode="decimal" [min]="0" [useGrouping]="true" fluid class="flex-1" />
+                                        <span class="flex items-center px-3 bg-surface-100 dark:bg-surface-800 rounded-border">$</span>
+                                        <p-inputnumber id="cogsDollar" [(ngModel)]="stock.cogsDollar" mode="decimal" [min]="0" [maxFractionDigits]="2" fluid class="flex-1" />
+                                    </div>
+                                </div>
+
+                                <!-- Supplier -->
+                                <div class="col-span-12 md:col-span-6">
+                                    <label for="supplier" class="block font-bold mb-2">Supplier</label>
+                                    <p-select [(ngModel)]="stock.supplier" [options]="suppliers" optionLabel="label" optionValue="value" placeholder="Select Supplier" fluid [showClear]="true" />
+                                </div>
+
+                                <!-- Tax Options -->
+                                <div class="col-span-12">
+                                    <label class="block font-bold mb-2">Tax Options</label>
+                                    <div class="flex gap-4">
+                                        <div class="flex items-center gap-2">
+                                            <p-radiobutton id="tax" name="taxOption" value="Tax" [(ngModel)]="stock.taxOption" />
+                                            <label for="tax" class="cursor-pointer">Tax</label>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <p-radiobutton id="taxFree" name="taxOption" value="Tax Free" [(ngModel)]="stock.taxOption" />
+                                            <label for="taxFree" class="cursor-pointer">Tax Free</label>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <p-radiobutton id="nonTax" name="taxOption" value="Non Tax" [(ngModel)]="stock.taxOption" />
+                                            <label for="nonTax" class="cursor-pointer">Non Tax</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Checkboxes -->
+                                <div class="col-span-12">
+                                    <label class="block font-bold mb-2">Stock Options</label>
+                                    <div class="grid grid-cols-12 gap-3">
+                                        <div class="col-span-6 md:col-span-4">
+                                            <div class="flex items-center gap-2">
+                                                <p-checkbox [(ngModel)]="stock.isService" binary inputId="isService" />
+                                                <label for="isService" class="cursor-pointer">Service</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-span-6 md:col-span-4">
+                                            <div class="flex items-center gap-2">
+                                                <p-checkbox [(ngModel)]="stock.isConsignment" binary inputId="isConsignment" />
+                                                <label for="isConsignment" class="cursor-pointer">Consignment</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-span-6 md:col-span-4">
+                                            <div class="flex items-center gap-2">
+                                                <p-checkbox [(ngModel)]="stock.isSuspended" binary inputId="isSuspended" />
+                                                <label for="isSuspended" class="cursor-pointer">Suspended</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-span-6 md:col-span-4">
+                                            <div class="flex items-center gap-2">
+                                                <p-checkbox [(ngModel)]="stock.selectPriceTags" binary inputId="selectPriceTags" />
+                                                <label for="selectPriceTags" class="cursor-pointer">Select Price Tags</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-span-6 md:col-span-4">
+                                            <div class="flex items-center gap-2">
+                                                <p-checkbox binary inputId="notCalcCOGS" />
+                                                <label for="notCalcCOGS" class="cursor-pointer">Not calc COGS</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-span-6 md:col-span-4">
+                                            <div class="flex items-center gap-2">
+                                                <p-checkbox [(ngModel)]="stock.isDiscontinue" binary inputId="isDiscontinue" />
+                                                <label for="isDiscontinue" class="cursor-pointer">Discontinue</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-span-6 md:col-span-4">
+                                            <div class="flex items-center gap-2">
+                                                <p-checkbox  binary inputId="noNeedOrder" />
+                                                <label for="noNeedOrder" class="cursor-pointer">No need order</label>
+                                                <i class="pi pi-question-circle text-blue-500 ml-1 cursor-pointer" pTooltip="This item does not require ordering" tooltipPosition="top"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column - Product Identification & Image -->
+                    <div class="col-span-12 lg:col-span-5">
+                        <div class="card mb-4">
+                            <h6 class="mb-4 font-semibold text-lg">Product Identification</h6>
+                            <div class="grid grid-cols-12 gap-4">
+                                <!-- Brand -->
+                                <div class="col-span-12">
+                                    <label for="brand" class="block font-bold mb-2">Brand</label>
+                                    <p-select [(ngModel)]="stock.brand" [options]="brands" optionLabel="label" optionValue="value" placeholder="Select Brand" fluid [showClear]="true" />
+                                </div>
+
+                                <!-- Part No.1 -->
+                                <div class="col-span-12 md:col-span-6">
+                                    <label for="partNo1" class="block font-bold mb-2">Part No.1</label>
+                                    <input type="text" pInputText id="partNo1" [(ngModel)]="stock.partNo1" fluid />
+                                </div>
+
+                                <!-- Part No.2 -->
+                                <div class="col-span-12 md:col-span-6">
+                                    <label for="partNo2" class="block font-bold mb-2">Part No.2</label>
+                                    <div class="flex gap-2">
+                                        <input type="text" pInputText id="partNo2" [(ngModel)]="stock.partNo2" fluid class="flex-1" />
+                                        <p-button icon="pi pi-external-link" [rounded]="true" [text]="true" severity="danger" pTooltip="Link video" />
+                                    </div>
+                                </div>
+
+                                <!-- Image Path -->
+                                <div class="col-span-12">
+                                    <label for="imagePath" class="block font-bold mb-2">Image</label>
+                                    <div class="flex gap-2">
+                                        <input type="text" pInputText id="imagePath" [(ngModel)]="stock.imagePath" fluid class="flex-1" placeholder="Image path..." />
+                                        <p-button icon="pi pi-ellipsis-h" [rounded]="true" [text]="true" (onClick)="fileInput.click()" />
+                                        <input #fileInput type="file" accept="image/*" style="display: none" (change)="onImageSelect($event)" />
+                                    </div>
+                                </div>
+
+                                <!-- Image Display -->
+                                <div class="col-span-12">
+                                    <div class="border-2 border-dashed border-surface-300 dark:border-surface-700 rounded-border p-4 bg-surface-50 dark:bg-surface-900" style="min-height: 200px;">
+                                        <div *ngIf="stock.imagePath" class="flex items-center justify-center h-full">
+                                            <img [src]="stock.imagePath" [alt]="stock.stockName" class="max-w-full max-h-48 object-contain" />
+                                        </div>
+                                        <div *ngIf="!stock.imagePath" class="flex items-center justify-center h-full text-muted-color">
+                                            <div class="text-center">
+                                                <i class="pi pi-image text-4xl mb-2"></i>
+                                                <p>No image selected</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-span-12">
+                                    <label for="memo" class="block font-bold mb-2">Memo</label>
+                                    <textarea id="memo" pTextarea [(ngModel)]="stock.memo" rows="4" cols="30" fluid placeholder="Enter memo..."></textarea>
+                                </div>
+                                <div class="col-span-12">
+                                    <div class="flex flex-col gap-2">
+                                        <div class="flex items-center gap-2">
+                                            <p-checkbox [(ngModel)]="stock.copyMemoToSalesInvoice" binary inputId="copyMemoToSalesInvoice" />
+                                            <label for="copyMemoToSalesInvoice" class="cursor-pointer">Copy Memo to Sales Invoice</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                
+                </p-tabpanel>
+
+                <!-- Markup Tab -->
+                <!-- <p-tabpanel value="1">
+                    <div class="grid grid-cols-12 gap-6 mt-4">
+                        <div class="col-span-12 xl:col-span-7">
+                            <div class="card space-y-4">
+                                <div class="grid grid-cols-12 gap-4 items-end">
+                                    <div class="col-span-12">
+                                        <label class="block font-semibold mb-2">Stock Name</label>
+                                        <input pInputText [(ngModel)]="stock.stockName" placeholder="Stock name" class="w-full" />
+                                    </div>
+
+                                    <div class="col-span-12 md:col-span-7">
+                                        <label class="block font-semibold mb-2">Purchase Price</label>
+                                        <div class="flex gap-2">
+                                            <p-inputnumber [(ngModel)]="stock.purchasePrice" mode="decimal" [min]="0" [useGrouping]="true" [maxFractionDigits]="2" styleClass="w-full" />
+                                            <span class="flex items-center px-3 rounded-border bg-surface-100 dark:bg-surface-800">$</span>
+                                            <p-inputnumber [(ngModel)]="stock.purchasePriceDollar" mode="decimal" [min]="0" [maxFractionDigits]="2" styleClass="w-32" />
+                                        </div>
+                                    </div>
+
+                                    <div class="col-span-12 md:col-span-5">
+                                        <label class="block font-semibold mb-2">Freight</label>
+                                        <div class="flex gap-2">
+                                            <p-inputnumber [(ngModel)]="stock.extraFee" mode="decimal" [min]="0" [useGrouping]="true" [maxFractionDigits]="2" styleClass="w-full" />
+                                            <p-inputnumber [(ngModel)]="stock.extraFeeDollar" mode="decimal" [min]="0" [maxFractionDigits]="2" styleClass="w-24" />
+                                            <p-inputnumber mode="decimal" [min]="0" [maxFractionDigits]="0" styleClass="w-16" />
+                                        </div>
+                                        <div class="flex items-center gap-2 mt-2">
+                                            <p-checkbox [(ngModel)]="stock.selectPriceTags" binary inputId="markupInclFreight" />
+                                            <label for="markupInclFreight" class="cursor-pointer text-sm text-primary">Markup incl. freight</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-span-12 md:col-span-7">
+                                        <label class="block font-semibold mb-2">Price + Freight</label>
+                                        <div class="flex gap-2">
+                                            <p-inputnumber [(ngModel)]="stock.cogs" mode="decimal" [min]="0" [useGrouping]="true" [maxFractionDigits]="2" styleClass="w-full" />
+                                            <p-button icon="pi pi-play" [rounded]="true" [text]="true" severity="danger" />
+                                            <p-button icon="pi pi-question-circle" [rounded]="true" [text]="true" />
+                                        </div>
+                                    </div>
+
+                                    <div class="col-span-6 md:col-span-4">
+                                        <label class="block font-semibold mb-2">Color</label>
+                                        <input pInputText [(ngModel)]="stock.color" placeholder="e.g. Red" class="w-full" />
+                                    </div>
+                                    <div class="col-span-6 md:col-span-4">
+                                        <label class="block font-semibold mb-2">Weight</label>
+                                        <p-inputnumber [(ngModel)]="stock.weight" mode="decimal" [min]="0" [maxFractionDigits]="2" styleClass="w-full" />
+                                    </div>
+                                    <div class="col-span-12 md:col-span-4">
+                                        <label class="block font-semibold mb-2">Size</label>
+                                        <input pInputText [(ngModel)]="stock.partNo2" placeholder="Size" class="w-full" />
+                                    </div>
+
+                                    <div class="col-span-12">
+                                        <label class="block font-semibold mb-2">Dimension</label>
+                                        <div class="grid grid-cols-12 gap-2 items-center">
+                                            <div class="col-span-4">
+                                                <p-inputnumber [(ngModel)]="stock.dimLength" mode="decimal" [min]="0" [maxFractionDigits]="2" styleClass="w-full" />
+                                            </div>
+                                            <span class="col-span-1 text-center text-muted-color">x</span>
+                                            <div class="col-span-4">
+                                                <p-inputnumber [(ngModel)]="stock.dimWidth" mode="decimal" [min]="0" [maxFractionDigits]="2" styleClass="w-full" />
+                                            </div>
+                                            <span class="col-span-1 text-center text-muted-color">x</span>
+                                            <div class="col-span-4">
+                                                <p-inputnumber [(ngModel)]="stock.dimHeight" mode="decimal" [min]="0" [maxFractionDigits]="2" styleClass="w-full" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-span-6 md:col-span-6">
+                                        <label class="block font-semibold mb-2">Rack #1</label>
+                                        <input pInputText [(ngModel)]="stock.rack1" class="w-full" />
+                                    </div>
+                                    <div class="col-span-6 md:col-span-6">
+                                        <label class="block font-semibold mb-2">Rack #2</label>
+                                        <input pInputText [(ngModel)]="stock.rack2" class="w-full" />
+                                    </div>
+                                    <div class="col-span-6 md:col-span-6">
+                                        <label class="block font-semibold mb-2">Rack #3</label>
+                                        <input pInputText [(ngModel)]="stock.rack3" class="w-full" />
+                                    </div>
+                                    <div class="col-span-6 md:col-span-6">
+                                        <label class="block font-semibold mb-2">Rack #4</label>
+                                        <input pInputText [(ngModel)]="stock.rack4" class="w-full" />
+                                    </div>
+
+                                    <div class="col-span-8 md:col-span-6">
+                                        <label class="block font-semibold mb-2">Store Type</label>
+                                        <p-select
+                                            [(ngModel)]="stock.storeType"
+                                            [options]="[{ label: 'Hyper', value: 'Hyper' }, { label: 'Grocery', value: 'Grocery' }, { label: 'Online', value: 'Online' }]"
+                                            placeholder="Select store type"
+                                            fluid
+                                        />
+                                    </div>
+                                    <div class="col-span-4 md:col-span-6 flex items-end gap-2">
+                                        <p-button icon="pi pi-play" [rounded]="true" [text]="true" severity="danger" />
+                                        <p-button icon="pi pi-question-circle" [rounded]="true" [text]="true" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-span-12 xl:col-span-5 space-y-4">
+                            <div class="card">
+                                <div class="grid grid-cols-12 gap-4">
+                                    <div class="col-span-6">
+                                        <h6 class="font-semibold mb-3">Markup</h6>
+                                        <div class="flex flex-col gap-2">
+                                            <div class="flex items-center gap-2">
+                                                <span class="w-24 text-sm text-muted-color">Wholesale</span>
+                                                <p-inputnumber [(ngModel)]="stock.wholesaleMarkup" mode="decimal" [min]="0" [maxFractionDigits]="2" suffix=" %" styleClass="w-full" />
+                                                <p-button icon="pi pi-refresh" [rounded]="true" [text]="true" />
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <span class="w-24 text-sm text-muted-color">Retail</span>
+                                                <p-inputnumber [(ngModel)]="stock.retailMarkup" mode="decimal" [min]="0" [maxFractionDigits]="2" suffix=" %" styleClass="w-full" />
+                                                <p-button icon="pi pi-refresh" [rounded]="true" [text]="true" />
+                                            </div>
+                                            <div class="flex items-center gap-2" *ngFor="let mk of [3,4,5]">
+                                                <span class="w-24 text-sm text-muted-color">Price #{{ mk }}</span>
+                                                <p-inputnumber  mode="decimal" [min]="0" [maxFractionDigits]="2" suffix=" %" styleClass="w-full" />
+                                                <p-button icon="pi pi-question-circle" [rounded]="true" [text]="true" />
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <span class="w-24 text-sm text-muted-color">Price $</span>
+                                                <p-inputnumber [(ngModel)]="stock.priceDollar" mode="decimal" [min]="0" [maxFractionDigits]="2" suffix=" %" styleClass="w-full" />
+                                                <p-button icon="pi pi-refresh" [rounded]="true" [text]="true" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-span-6">
+                                        <h6 class="font-semibold mb-3">Default Setup System</h6>
+                                        <div class="flex flex-col gap-2">
+                                            <div class="flex items-center gap-2" *ngFor="let mk of ['Wholesale','Retail','Price #3','Price #4','Price #5','Price $']">
+                                                <span class="w-28 text-sm text-muted-color">{{ mk }}</span>
+                                                <p-inputnumber mode="decimal" [min]="0" [maxFractionDigits]="2" suffix=" %" styleClass="w-full" />
+                                                <p-button icon="pi pi-check" [rounded]="true" [text]="true" severity="success" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-span-12">
+                                        <div class="border border-surface-200 dark:border-surface-700 rounded-border p-3 flex flex-col md:flex-row gap-4 items-start">
+                                            <div class="flex-1">
+                                                <h6 class="font-semibold mb-2">Document Preview</h6>
+                                                <div class="w-full h-40 bg-surface-50 dark:bg-surface-900 border border-dashed border-surface-300 dark:border-surface-700 rounded-border flex items-center justify-center text-muted-color">
+                                                    <span>Preview / attach document</span>
+                                                </div>
+                                            </div>
+                                            <div class="w-48">
+                                                <div class="flex flex-col gap-3">
+                                                    <p-button icon="pi pi-question-circle" label="" [rounded]="true" severity="info" />
+                                                    <p-iconfield>
+                                                        <p-inputicon styleClass="pi pi-search" />
+                                                        <input pInputText placeholder="Search by Brand" />
+                                                    </p-iconfield>
+                                                    <p-iconfield>
+                                                        <p-inputicon styleClass="pi pi-search" />
+                                                        <input pInputText placeholder="Search by Stock Name (Alt+?)" />
+                                                    </p-iconfield>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-span-12 flex flex-wrap items-center gap-4">
+                                        <span class="font-semibold">Markup result:</span>
+                                        <div class="flex items-center gap-2">
+                                            <p-radiobutton name="rounding" value="10" [(ngModel)]="stock.roundingMode" />
+                                            <label class="cursor-pointer">Round to 10</label>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <p-radiobutton name="rounding" value="100" [(ngModel)]="stock.roundingMode" />
+                                            <label class="cursor-pointer">to 100</label>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <p-radiobutton name="rounding" value="1000" [(ngModel)]="stock.roundingMode" />
+                                            <label class="cursor-pointer">to 1000</label>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <p-radiobutton name="rounding" value="none" [(ngModel)]="stock.roundingMode" />
+                                            <label class="cursor-pointer">No Round-up</label>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <p-checkbox [(ngModel)]="stock.roundUp" binary inputId="roundUp" />
+                                            <label for="roundUp" class="cursor-pointer">Round-up</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </p-tabpanel> -->
+
+                <!-- <p-tabpanel value="2">
+                    <div class="grid grid-cols-12 gap-6 mt-4">
+                        <div class="col-span-12 xl:col-span-6">
+                            <div class="card space-y-4">
+                                <div class="grid grid-cols-12 gap-3 items-center">
+                                    <div class="col-span-12">
+                                        <label class="block font-semibold mb-2">Stock Name</label>
+                                        <input pInputText [(ngModel)]="stock.stockName" class="w-full" />
+                                    </div>
+                                    <div class="col-span-12 md:col-span-6">
+                                        <label class="block font-semibold mb-2">Store Min</label>
+                                        <p-inputnumber [(ngModel)]="stock.storeMin" mode="decimal" [min]="0" styleClass="w-full" />
+                                    </div>
+                                    <div class="col-span-12 md:col-span-6">
+                                        <label class="block font-semibold mb-2">Store Max</label>
+                                        <p-inputnumber [(ngModel)]="stock.storeMax" mode="decimal" [min]="0" styleClass="w-full" />
+                                    </div>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <div class="flex items-center gap-2">
+                                        <p-checkbox [(ngModel)]="stock.blockIfBelowPurchase" binary inputId="blockIfBelowPurchase" />
+                                        <label for="blockIfBelowPurchase" class="cursor-pointer">Not allow if ≤ Purchase Price</label>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <p-checkbox [(ngModel)]="stock.warnIfBelowCogs" binary inputId="warnIfBelowCogs" />
+                                        <label for="warnIfBelowCogs" class="cursor-pointer">Warning if ≤ COGS *</label>
+                                    </div>
+                                    <p class="text-xs text-muted-color ml-6">*) Calculate upon save</p>
+                                    <div class="flex items-center gap-2">
+                                        <p-checkbox [(ngModel)]="stock.blockIfInsufficientStock" binary inputId="blockIfInsufficientStock" />
+                                        <label for="blockIfInsufficientStock" class="cursor-pointer">Not allow to proceed if insufficient stock</label>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-12 gap-3">
+                                    <div class="col-span-12 md:col-span-6">
+                                        <label class="block font-semibold mb-2">Disc Member</label>
+                                        <input pInputText [(ngModel)]="stock.discMember" class="w-full" />
+                                    </div>
+                                    <div class="col-span-12 md:col-span-6">
+                                        <label class="block font-semibold mb-2">Purchase</label>
+                                        <input pInputText [(ngModel)]="stock.miscPurchase" class="w-full" />
+                                    </div>
+                                    <div class="col-span-12 md:col-span-6">
+                                        <label class="block font-semibold mb-2">Sold</label>
+                                        <input pInputText [(ngModel)]="stock.miscSold" class="w-full" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-span-12 xl:col-span-6">
+                            <div class="card space-y-4">
+                                <div class="grid grid-cols-12 gap-3 items-center">
+                                    <div class="col-span-12 md:col-span-6">
+                                        <label class="block font-semibold mb-2 text-primary">Kode Coretax</label>
+                                        <input pInputText [(ngModel)]="stock.kodeCoretax" class="w-full" />
+                                    </div>
+                                    <div class="col-span-12 md:col-span-6">
+                                        <label class="block font-semibold mb-2">Commission (B)</label>
+                                        <p-inputnumber [(ngModel)]="stock.commissionB" mode="decimal" [min]="0" [maxFractionDigits]="2" styleClass="w-full" />
+                                    </div>
+                                    <div class="col-span-12">
+                                        <label class="block font-semibold mb-2">or Value / Pcs</label>
+                                        <div class="flex gap-2">
+                                            <p-inputnumber [(ngModel)]="stock.commissionValue" mode="decimal" [min]="0" [maxFractionDigits]="2" styleClass="w-full" />
+                                            <p-checkbox [(ngModel)]="stock.commissionPerPiece" binary inputId="commissionPerPiece" />
+                                            <label for="commissionPerPiece" class="cursor-pointer text-sm">Per piece</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-12 gap-3">
+                                    <div class="col-span-12 md:col-span-6">
+                                        <label class="block font-semibold mb-2">Movement</label>
+                                        <div class="flex flex-wrap gap-4">
+                                            <div class="flex items-center gap-2">
+                                                <p-radiobutton name="movementSpeed" value="fast" [(ngModel)]="stock.movementSpeed" inputId="fastMoving" />
+                                                <label for="fastMoving" class="cursor-pointer">Fast Moving</label>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <p-radiobutton name="movementSpeed" value="slow" [(ngModel)]="stock.movementSpeed" inputId="slowMoving" />
+                                                <label for="slowMoving" class="cursor-pointer">Slow Moving</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-span-12 md:col-span-6">
+                                        <label class="block font-semibold mb-2">Production Stage</label>
+                                        <div class="flex flex-wrap gap-4">
+                                            <div class="flex items-center gap-2">
+                                                <p-radiobutton name="productionStage" value="finished" [(ngModel)]="stock.productionStage" inputId="finishedGood" />
+                                                <label for="finishedGood" class="cursor-pointer">Finished Good</label>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <p-radiobutton name="productionStage" value="material" [(ngModel)]="stock.productionStage" inputId="materialStage" />
+                                                <label for="materialStage" class="cursor-pointer">Material</label>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <p-radiobutton name="productionStage" value="wip" [(ngModel)]="stock.productionStage" inputId="wipStage" />
+                                                <label for="wipStage" class="cursor-pointer">Work In Progress</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block font-semibold mb-2">Permit License (Pharmacy)</label>
+                                    <input pInputText [(ngModel)]="stock.permitLicense" class="w-full" />
+                                </div>
+                            </div>
+                        </div>
+                    </div> 
+                </p-tabpanel>-->
+
+                <!-- <p-tabpanel value="3">
+                    <div class="grid grid-cols-12 gap-6 mt-4">
+                        <div class="col-span-12 xl:col-span-7">
+                            <div class="card space-y-4">
+                                <div class="grid grid-cols-12 gap-3 items-center">
+                                    <div class="col-span-12">
+                                        <label class="block font-semibold mb-2">Stock Name</label>
+                                        <input pInputText [(ngModel)]="stock.stockName" class="w-full" />
+                                    </div>
+                                    <div class="col-span-12 md:col-span-6">
+                                        <label class="block font-semibold mb-2">Purchase Price</label>
+                                        <p-inputnumber [(ngModel)]="stock.purchasePrice" mode="decimal" [min]="0" [useGrouping]="true" [maxFractionDigits]="2" styleClass="w-full" />
+                                    </div>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <div class="flex items-center gap-2">
+                                        <p-checkbox [(ngModel)]="stock.priceByQty" binary inputId="priceByQty" />
+                                        <label for="priceByQty" class="cursor-pointer">Price by qty</label>
+                                        <p-button icon="pi pi-question-circle" [rounded]="true" [text]="true" />
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <p-checkbox [(ngModel)]="stock.applyToSmallestUnit" binary inputId="applySmallestUnit" />
+                                        <label for="applySmallestUnit" class="cursor-pointer">Apply to the smallest unit</label>
+                                    </div>
+                                </div>
+
+                                <div class="overflow-x-auto">
+                                    <table class="w-full">
+                                        <thead>
+                                            <tr class="border-b border-surface-200 dark:border-surface-700">
+                                                <th class="p-2 text-left w-28">Qty ≥</th>
+                                                <th class="p-2 text-left w-28">to</th>
+                                                <th class="p-2 text-left">Price</th>
+                                                <th class="p-2 text-left w-28">Disc%</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr *ngFor="let tier of stock.priceQtyTiers ?? []; let i = index" class="border-b border-surface-100 dark:border-surface-800">
+                                                <td class="p-2">
+                                                    <p-inputnumber [(ngModel)]="tier.qtyFrom" mode="decimal" [min]="0" [maxFractionDigits]="0" styleClass="w-full" />
+                                                </td>
+                                                <td class="p-2">
+                                                    <p-inputnumber [(ngModel)]="tier.qtyTo" mode="decimal" [min]="0" [maxFractionDigits]="0" styleClass="w-full" />
+                                                </td>
+                                                <td class="p-2">
+                                                    <p-inputnumber [(ngModel)]="tier.price" mode="decimal" [min]="0" [useGrouping]="true" [maxFractionDigits]="2" styleClass="w-full" />
+                                                </td>
+                                                <td class="p-2">
+                                                    <p-inputnumber [(ngModel)]="tier.discountPercent" mode="decimal" [min]="0" [maxFractionDigits]="2" suffix=" %" styleClass="w-full" />
+                                                </td>
+                                            </tr>
+                                            <tr *ngIf="!stock.priceQtyTiers || stock.priceQtyTiers.length === 0">
+                                                <td colspan="4" class="text-center p-4 text-muted-color">No tiers defined. Add qty tiers below.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="flex gap-2">
+                                    <p-button label="Add Tier" icon="pi pi-plus" size="small" />
+                                    
+                                    <p-button label="Clear" icon="pi pi-times" severity="secondary" text size="small" (onClick)="stock.priceQtyTiers = []" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </p-tabpanel> -->
+<!-- (onClick)="stock.priceQtyTiers = [...(stock.priceQtyTiers || []), { qtyFrom: 0, qtyTo: null, price: null, discountPercent: null }]" /> -->
+                <!-- <p-tabpanel value="4">
+                    <div class="grid grid-cols-12 gap-6 mt-4">
+                        <div class="col-span-12 xl:col-span-8">
+                            <div class="card space-y-4">
+                                <div class="grid grid-cols-12 gap-3 items-center">
+                                    <div class="col-span-12">
+                                        <label class="block font-semibold mb-2">Stock Name</label>
+                                        <input pInputText [(ngModel)]="stock.stockName" class="w-full" />
+                                    </div>
+                                    <div class="col-span-12 md:col-span-6">
+                                        <label class="block font-semibold mb-2">Purchase Price</label>
+                                        <div class="flex gap-2">
+                                            <p-inputnumber [(ngModel)]="stock.purchasePrice" mode="decimal" [min]="0" [useGrouping]="true" [maxFractionDigits]="2" styleClass="w-full" />
+                                            <span class="flex items-center px-3 rounded-border bg-surface-100 dark:bg-surface-800">$</span>
+                                            <p-inputnumber [(ngModel)]="stock.purchasePriceDollar" mode="decimal" [min]="0" [maxFractionDigits]="2" styleClass="w-28" />
+                                        </div>
+                                    </div>
+                                    <div class="col-span-12 md:col-span-6">
+                                        <label class="block font-semibold mb-2">Gross Price</label>
+                                        <div class="flex gap-2">
+                                            <p-inputnumber [(ngModel)]="stock.grossPrice" mode="decimal" [min]="0" [useGrouping]="true" [maxFractionDigits]="2" styleClass="w-full" />
+                                            <span class="flex items-center px-3 rounded-border bg-surface-100 dark:bg-surface-800">$</span>
+                                            <p-inputnumber [(ngModel)]="stock.grossPriceDollar" mode="decimal" [min]="0" [maxFractionDigits]="2" styleClass="w-28" />
+                                        </div>
+                                    </div>
+                                    <div class="col-span-12 md:col-span-6">
+                                        <label class="block font-semibold mb-2">Previous Price</label>
+                                        <div class="flex gap-2">
+                                            <p-inputnumber [(ngModel)]="stock.previousPrice" mode="decimal" [min]="0" [useGrouping]="true" [maxFractionDigits]="2" styleClass="w-full" />
+                                            <span class="flex items-center px-3 rounded-border bg-surface-100 dark:bg-surface-800">$</span>
+                                            <p-inputnumber [(ngModel)]="stock.previousPriceDollar" mode="decimal" [min]="0" [maxFractionDigits]="2" styleClass="w-28" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </p-tabpanel> -->
+
+                <!-- <p-tabpanel value="5">
+                    <div class="grid grid-cols-12 gap-6 mt-4">
+                        <div class="col-span-12 xl:col-span-7">
+                            <div class="card space-y-4">
+                                <div class="grid grid-cols-12 gap-3 items-center">
+                                    <div class="col-span-12">
+                                        <label class="block font-semibold mb-2">Stock Name</label>
+                                        <input pInputText [(ngModel)]="stock.stockName" class="w-full" />
+                                    </div>
+                                    <div class="col-span-12 md:col-span-6">
+                                        <label class="block font-semibold mb-2">Disc Item for Member</label>
+                                        <input pInputText [(ngModel)]="stock.discItemForMember" class="w-full" />
+                                    </div>
+                                    <div class="col-span-12 md:col-span-6">
+                                        <label class="block font-semibold mb-2">Disc Happy Hour</label>
+                                        <input pInputText [(ngModel)]="stock.discHappyHour" class="w-full" />
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-12 gap-3 items-center">
+                                    <div class="col-span-12 md:col-span-4">
+                                        <label class="block font-semibold mb-2">Purchasing</label>
+                                        <p-inputnumber [(ngModel)]="stock.purchasingUnits" mode="decimal" [min]="0" [maxFractionDigits]="0" styleClass="w-full" />
+                                    </div>
+                                    <div class="col-span-12 md:col-span-8 flex items-center gap-2">
+                                        <span class="text-sm text-muted-color">unit(s) will get</span>
+                                        <p-button icon="pi pi-times" [rounded]="true" [text]="true" severity="danger" />
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-12 gap-3 items-center">
+                                    <div class="col-span-12 md:col-span-6">
+                                        <label class="block font-semibold mb-2">Valid From</label>
+                                        <input type="date" pInputText [(ngModel)]="stock.posValidFrom" class="w-full" />
+                                    </div>
+                                    <div class="col-span-12 md:col-span-6">
+                                        <label class="block font-semibold mb-2">Valid To</label>
+                                        <input type="date" pInputText [(ngModel)]="stock.posValidTo" class="w-full" />
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-12 gap-3 items-center">
+                                    <div class="col-span-12 md:col-span-6">
+                                        <label class="block font-semibold mb-2">Max sales allowed (0 = N/A)</label>
+                                        <p-inputnumber [(ngModel)]="stock.maxSalesAllowed" mode="decimal" [min]="0" [maxFractionDigits]="0" styleClass="w-full" />
+                                    </div>
+                                    <div class="col-span-12 md:col-span-6 flex items-center gap-2">
+                                        <p-button icon="pi pi-play" [rounded]="true" [text]="true" severity="danger" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-span-12 xl:col-span-5">
+                            <div class="card space-y-3">
+                                <h6 class="font-semibold text-lg">Options</h6>
+                                <div class="flex flex-col gap-2">
+                                    <div class="flex items-center gap-2">
+                                        <p-checkbox [(ngModel)]="stock.openPrice" binary inputId="openPrice" />
+                                        <label for="openPrice" class="cursor-pointer">Open Price</label>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <p-checkbox [(ngModel)]="stock.roundUnitNoDecimal" binary inputId="roundUnit" />
+                                        <label for="roundUnit" class="cursor-pointer">Round Unit (no decimal)</label>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <p-checkbox [(ngModel)]="stock.qtyManual" binary inputId="qtyManual" />
+                                        <label for="qtyManual" class="cursor-pointer">Qty manual</label>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <p-checkbox [(ngModel)]="stock.smallBusinessItem" binary inputId="smallBusinessItem" />
+                                        <label for="smallBusinessItem" class="cursor-pointer">Small Business Item</label>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <p-checkbox [(ngModel)]="stock.pharmacyItem" binary inputId="pharmacyItem" />
+                                        <label for="pharmacyItem" class="cursor-pointer">Pharmacy Item</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </p-tabpanel> -->
+
+                <!-- <p-tabpanel value="6">
+                    <div class="p-4 text-center text-muted-color">
+                        <p>Commission settings will be implemented here</p>
+                    </div>
+                </p-tabpanel> -->
+
+                <!-- <p-tabpanel value="7">
+                    <div class="p-4 text-center text-muted-color">
+                        <p>Kitchen printer settings will be implemented here</p>
+                    </div>
+                </p-tabpanel> -->
+
+                <!-- <p-tabpanel value="8">
+                    <div class="card mt-4">
+                        <div class="grid grid-cols-12 gap-4 items-start">
+                            <div class="col-span-12">
+                                <label class="block font-semibold mb-2">Stock Name</label>
+                                <input pInputText [(ngModel)]="stock.stockName" class="w-full" />
+                            </div>
+
+                            <div class="col-span-12 lg:col-span-6 space-y-3">
+                                <div class="flex items-center gap-2">
+                                    <label class="w-32 text-right font-medium">Astra Otoparts</label>
+                                    <input pInputText [(ngModel)]="stock.mappingAstraOtoparts" class="flex-1" />
+                                    <p-button icon="pi pi-copy" [text]="true" [rounded]="true" />
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <label class="w-32 text-right font-medium">Kino</label>
+                                    <input pInputText [(ngModel)]="stock.mappingKino" class="flex-1" />
+                                    <p-button icon="pi pi-copy" [text]="true" [rounded]="true" />
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <label class="w-32 text-right font-medium">Arnott's</label>
+                                    <input pInputText [(ngModel)]="stock.mappingArnotts" class="flex-1" />
+                                    <p-button icon="pi pi-copy" [text]="true" [rounded]="true" />
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <label class="w-32 text-right font-medium">ADIS</label>
+                                    <input pInputText [(ngModel)]="stock.mappingAdis" class="flex-1" />
+                                    <p-button icon="pi pi-copy" [text]="true" [rounded]="true" />
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <label class="w-32 text-right font-medium">J&J</label>
+                                    <input pInputText [(ngModel)]="stock.mappingJJ" class="flex-1" />
+                                    <p-button icon="pi pi-copy" [text]="true" [rounded]="true" />
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <label class="w-32 text-right font-medium">Unza Vitalis</label>
+                                    <input pInputText [(ngModel)]="stock.mappingUnzaVitalis" class="flex-1" />
+                                    <p-button icon="pi pi-copy" [text]="true" [rounded]="true" />
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <label class="w-32 text-right font-medium">SCJI</label>
+                                    <input pInputText [(ngModel)]="stock.mappingScji" class="flex-1" />
+                                    <p-button icon="pi pi-copy" [text]="true" [rounded]="true" />
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <label class="w-32 text-right font-medium">Unifam</label>
+                                    <input pInputText [(ngModel)]="stock.mappingUnifam" class="flex-1" />
+                                    <p-button icon="pi pi-copy" [text]="true" [rounded]="true" />
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <label class="w-32 text-right font-medium">Nutrifood</label>
+                                    <input pInputText [(ngModel)]="stock.mappingNutrifood" class="flex-1" />
+                                    <p-button icon="pi pi-copy" [text]="true" [rounded]="true" />
+                                </div>
+                            </div>
+
+                            <div class="col-span-12 lg:col-span-6 space-y-3">
+                                <div class="flex items-center gap-2">
+                                    <label class="w-32 text-right font-medium">Si Odie</label>
+                                    <input pInputText [(ngModel)]="stock.mappingSiOdie" class="flex-1" />
+                                    <p-button icon="pi pi-copy" [text]="true" [rounded]="true" />
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <label class="w-32 text-right font-medium">Menkes</label>
+                                    <input pInputText [(ngModel)]="stock.mappingMenkes" class="flex-1" />
+                                    <p-button icon="pi pi-copy" [text]="true" [rounded]="true" />
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <label class="w-32 text-right font-medium">ABC Presiden</label>
+                                    <input pInputText [(ngModel)]="stock.mappingAbcPresiden" class="flex-1" />
+                                    <p-button icon="pi pi-copy" [text]="true" [rounded]="true" />
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <label class="w-32 text-right font-medium">Motasa</label>
+                                    <input pInputText [(ngModel)]="stock.mappingMotasa" class="flex-1" />
+                                    <p-button icon="pi pi-copy" [text]="true" [rounded]="true" />
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <label class="w-32 text-right font-medium">ASIS</label>
+                                    <input pInputText [(ngModel)]="stock.mappingAsis" class="flex-1" />
+                                    <p-button icon="pi pi-copy" [text]="true" [rounded]="true" />
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <label class="w-32 text-right font-medium">NetSuite</label>
+                                    <input pInputText [(ngModel)]="stock.mappingNetSuite" class="flex-1" />
+                                    <input pInputText [(ngModel)]="stock.mappingNetSuiteAlt" class="w-36" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </p-tabpanel> -->
+            </p-tabpanels>
+        </p-tabs>
+        <!-- Pricing Table -->
+        <div class="card mt-4">
+            <div class="flex items-center justify-between mb-4">
+                <h6 class="font-semibold text-lg">Price & Stock Units</h6>
+                <p-button label="Add Row" icon="pi pi-plus" size="small" (onClick)="addPriceRow()" />
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-surface-200 dark:border-surface-700">
+                            <th class="text-left p-3 font-semibold">Stock Code</th>
+                            <th class="text-left p-3 font-semibold">Unit (F2)</th>
+                            <th class="text-left p-3 font-semibold">Factor</th>
+                            <th class="text-left p-3 font-semibold">Purchase</th>
+                            <th class="text-left p-3 font-semibold">Wholesale</th>
+                            <th class="text-left p-3 font-semibold">Retail</th>
+                            <th class="text-left p-3 font-semibold">Price $</th>
+                            <th class="text-left p-3 font-semibold">Price #3</th>
+                            <th class="text-left p-3 font-semibold">Price #4</th>
+                            <th class="text-left p-3 font-semibold">Price #5</th>
+                            <th class="text-center p-3 font-semibold">Key</th>
+                            <th class="text-center p-3 font-semibold">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let row of stock.priceRows; let i = index" class="border-b border-surface-100 dark:border-surface-800">
+                            <td class="p-2">
+                                <input type="text" pInputText [(ngModel)]="row.stockCode" class="w-full" />
+                            </td>
+                            <td class="p-2">
+                                <p-select [(ngModel)]="row.unit" [options]="units" optionLabel="label" optionValue="value" styleClass="w-full" />
+                            </td>
+                            <td class="p-2">
+                                <p-inputnumber [(ngModel)]="row.factor" mode="decimal" [min]="0" [maxFractionDigits]="4" styleClass="w-full" />
+                            </td>
+                            <td class="p-2">
+                                <p-inputnumber [(ngModel)]="row.purchase" mode="decimal" [min]="0" [useGrouping]="true" styleClass="w-full" />
+                            </td>
+                            <td class="p-2">
+                                <p-inputnumber [(ngModel)]="row.wholesale" mode="decimal" [min]="0" [useGrouping]="true" styleClass="w-full" />
+                            </td>
+                            <td class="p-2">
+                                <p-inputnumber [(ngModel)]="row.retail" mode="decimal" [min]="0" [useGrouping]="true" styleClass="w-full" />
+                            </td>
+                            <td class="p-2">
+                                <p-inputnumber [(ngModel)]="row.priceDollar" mode="decimal" [min]="0" [maxFractionDigits]="2" styleClass="w-full" />
+                            </td>
+                            <td class="p-2">
+                                <p-inputnumber [(ngModel)]="row.price3" mode="decimal" [min]="0" [maxFractionDigits]="2" styleClass="w-full" />
+                            </td>
+                            <td class="p-2">
+                                <p-inputnumber [(ngModel)]="row.price4" mode="decimal" [min]="0" [maxFractionDigits]="2" styleClass="w-full" />
+                            </td>
+                            <td class="p-2">
+                                <p-inputnumber [(ngModel)]="row.price5" mode="decimal" [min]="0" [maxFractionDigits]="2" styleClass="w-full" />
+                            </td>
+                            <td class="p-2 text-center">
+                                <p-checkbox [(ngModel)]="row.isKey" binary [inputId]="'key' + i" />
+                            </td>
+                            <td class="p-2 text-center">
+                                <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [text]="true" size="small" (onClick)="removePriceRow(i)" />
+                            </td>
+                        </tr>
+                        <tr *ngIf="!stock.stockDetails || stock.stockDetails.length === 0">
+                            <td colspan="12" class="text-center p-4 text-muted-color">No price rows added. Click "Add Row" to add pricing information.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </ng-template>
+    <ng-template #footer>
+        <div class="flex justify-end gap-2">
+            <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
+            <p-button label="Save" icon="pi pi-check" (click)="saveStock()" />
+        </div>
+    </ng-template>
+</p-dialog>
+

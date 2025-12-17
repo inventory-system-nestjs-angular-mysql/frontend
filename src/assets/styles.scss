@@ -1,0 +1,20 @@
+
+/* PrimeNG, PrimeFlex, PrimeIcons, and Sakai Layout styles */
+// @import 'primeng/resources/themes/saga-blue/theme.css';
+// @import 'primeng/resources/primeng.css';
+// @import 'primeicons/primeicons.css';
+// @import 'primeflex/primeflex.min.css';
+// @import './assets/layout/layout.scss';
+/* You can add global styles to this file, and also import other style files */
+
+// Import SCSS-only modules
+// @use './assets/layout/layout.scss';
+// @use './assets/demo/demo.scss';
+
+// @import './assets/tailwind';
+
+@use './tailwind.css';
+@use './layout/layout.scss';
+@use 'primeicons/primeicons.css';
+@use './demo/demo.scss';
+

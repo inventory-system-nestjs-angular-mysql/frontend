@@ -1,0 +1,76 @@
+<p-toolbar styleClass="mb-6">
+    <ng-template #start>
+        <p-button label="New" icon="pi pi-plus" severity="secondary" class="mr-2" (onClick)="openNew()" />
+        <p-button severity="secondary" label="Delete" icon="pi pi-trash" outlined (onClick)="deleteSelectedStockGroups()" [disabled]="!selectedStockGroups || !selectedStockGroups.length" />
+    </ng-template>
+    <ng-template #end>
+        <p-button label="Export" icon="pi pi-upload" severity="secondary" (onClick)="dt.exportCSV()" />
+    </ng-template>
+</p-toolbar>
+
+<p-table
+    #dt
+    [value]="stockGroups()"
+    [rows]="10"
+    [columns]="cols"
+    [paginator]="true"
+    [globalFilterFields]="['description', 'serialNumber']"
+    [tableStyle]="{ 'min-width': '50rem' }"
+    [(selection)]="selectedStockGroups"
+    [rowHover]="true"
+    dataKey="id"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} stock groups"
+    [showCurrentPageReport]="true"
+    [rowsPerPageOptions]="[10, 20, 30]"
+>
+    <ng-template #caption>
+        <div class="flex items-center justify-between">
+            <h5 class="m-0">Manage Stock Groups</h5>
+            <p-iconfield>
+                <p-inputicon styleClass="pi pi-search" />
+                <input pInputText type="text" (input)="dt.filterGlobal($event.target.value, 'contains')" placeholder="Search..." />
+            </p-iconfield>
+        </div>
+    </ng-template>
+    <ng-template #header>
+        <tr>
+            <th style="width: 3rem">
+                <p-tableHeaderCheckbox />
+            </th>
+            <th style="min-width: 10rem">Sr. No</th>
+            <th style="min-width: 16rem">Description</th>
+            <th style="min-width: 8rem"></th>
+        </tr>
+    </ng-template>
+    <ng-template #body let-sg>
+        <tr>
+            <td style="width: 3rem">
+                <p-tableCheckbox [value]="sg" />
+            </td>
+            <td>{{ sg.serialNumber || '-' }}</td>
+            <td>{{ sg.description }}</td>
+            <td>
+                <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true" (click)="editStockGroup(sg)" />
+                <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true" (click)="deleteStockGroup(sg)" />
+            </td>
+        </tr>
+    </ng-template>
+</p-table>
+
+<p-dialog [(visible)]="stockGroupDialog" [style]="{ width: '450px' }" header="Stock Group Details" [modal]="true">
+    <ng-template #content>
+        <div class="flex flex-col gap-6">
+            <div>
+                <label for="description" class="block font-bold mb-3">Description</label>
+                <input type="text" pInputText id="description" [(ngModel)]="stockGroup.description" required autofocus fluid />
+                <small class="text-red-500" *ngIf="submitted && !stockGroup.description">Description is required.</small>
+            </div>
+        </div>
+    </ng-template>
+    <ng-template #footer>
+        <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
+        <p-button label="Save" icon="pi pi-check" (click)="saveStockGroup()" />
+    </ng-template>
+</p-dialog>
+
+<p-confirmdialog [style]="{ width: '450px' }" />

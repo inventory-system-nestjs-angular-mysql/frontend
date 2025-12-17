@@ -1,0 +1,8 @@
+/* test TypeScript config: removed spec/include entries because tests were deleted */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/spec"
+  },
+  "include": []
+}
