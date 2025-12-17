@@ -37,6 +37,11 @@ export class AppMenu {
                         label: 'Stock',
                         icon: 'pi pi-fw pi-box',
                         routerLink: ['/app/masters/stock']
+                    },
+                    {
+                        label: 'Unit',
+                        icon: 'pi pi-fw pi-cog',
+                        routerLink: ['/app/masters/unit']
                     }
                 ]
             },

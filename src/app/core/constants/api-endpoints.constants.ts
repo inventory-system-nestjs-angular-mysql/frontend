@@ -12,5 +12,9 @@ export const API_ENDPOINTS = {
   // Stock Group endpoints
   STOCK_GROUPS: '/stockgroups',
   STOCK_GROUP_BY_ID: (id: string) => `/stockgroups/${id}`,
+
+  // Unit endpoints
+  UNITS: '/units',
+  UNIT_BY_ID: (id: string) => `/units/${id}`,
 } as const;
 
