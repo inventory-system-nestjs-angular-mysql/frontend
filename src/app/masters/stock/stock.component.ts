@@ -28,6 +28,10 @@ import { RadioButtonModule } from 'primeng/radiobutton';
 import { CheckboxModule } from 'primeng/checkbox';
 import { TabsModule } from 'primeng/tabs';
 import { TooltipModule } from 'primeng/tooltip';
+import { BrandResponseModel } from '../../core/models/brand';
+import { BrandService } from '../brand/brand.service';
+import { UnitResponseModel } from '../../core/models/unit';
+import { UnitService } from '../unit/unit.service';
 
 @Component({
     selector: 'app-stock',
@@ -61,6 +65,9 @@ export class StockComponent implements OnInit {
     stockDialog = false;
     stocks = signal<StockResponseModel[]>([]);
     stockGroups = signal<StockGroupResponseModel[]>([]);
+    brands = signal<BrandResponseModel[]>([]);
+    // suppliers = signal<BrandResponseModel[]>([]);
+    units = signal<UnitResponseModel[]>([]);
     stock: Partial<CreateStockModel & { cSTKpk?: string; priceRows?: StockPriceRow[] }> = {
         taxOption: 'Tax',
         priceRows: []
@@ -68,7 +75,6 @@ export class StockComponent implements OnInit {
     selectedStocks: StockResponseModel[] = [];
     submitted = false;
     cols = [
-        { field: 'cSTKpk', header: 'Code' },
         { field: 'stockName', header: 'Stock Name' },
         { field: 'stockGroupId', header: 'Group' },
         { field: 'brand', header: 'Brand' },
@@ -84,30 +90,20 @@ export class StockComponent implements OnInit {
         { label: 'Supplier 2', value: 'Supplier 2' }
     ];
 
-    brands = [
-        { label: 'Sony', value: 'Sony' },
-        { label: 'ASUS', value: 'ASUS' },
-        { label: 'Brand 1', value: 'Brand 1' }
-    ];
-
-    units = [
-        { label: 'Pcs', value: 'Pcs' },
-        { label: 'Box', value: 'Box' },
-        { label: 'Dozen', value: 'Dozen' },
-        { label: 'Kg', value: 'Kg' },
-        { label: 'Ltr', value: 'Ltr' }
-    ];
-
     constructor(
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
         private stockService: StockService,
-        private stockGroupService: StockGroupService
+        private stockGroupService: StockGroupService,
+        private brandService: BrandService,
+        private unitService: UnitService
     ) {}
 
     ngOnInit() {
         this.loadStocks();
         this.loadStockGroups();
+        this.loadBrands();
+        this.loadUnits();
     }
 
     loadStocks() {
@@ -121,6 +117,20 @@ export class StockComponent implements OnInit {
         this.stockGroupService.getStockGroups().subscribe({
             next: (data) => this.stockGroups.set(data),
             error: () => console.error('Failed to load stock groups')
+        });
+    }
+
+    loadBrands() {
+        this.brandService.getBrands().subscribe({
+            next: (data) => this.brands.set(data),
+            error: () => console.error('Failed to load brands')
+        });
+    }
+    
+    loadUnits() {
+        this.unitService.getUnits().subscribe({
+            next: (data) => this.units.set(data),
+            error: () => console.error('Failed to load units')
         });
     }
 
@@ -258,6 +268,12 @@ export class StockComponent implements OnInit {
         if (!groupId) return '';
         const group = this.stockGroups().find(g => g.id === groupId);
         return group?.description || '';
+    }
+
+    getBrandName(brandId: string | null | undefined): string {
+        if (!brandId) return '';
+        const brand = this.brands().find(g => g.id === brandId);
+        return brand?.description || '';
     }
 }
 

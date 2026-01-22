@@ -16,5 +16,33 @@ export const API_ENDPOINTS = {
   // Unit endpoints
   UNITS: '/units',
   UNIT_BY_ID: (id: string) => `/units/${id}`,
+
+  // Bank endpoints
+  BANKS: '/banks',
+  BANK_BY_ID: (id: string) => `/banks/${id}`,
+
+  // Warehouse endpoints
+  WAREHOUSES: '/warehouses',
+  WAREHOUSE_BY_ID: (id: string) => `/warehouses/${id}`,
+
+  // Brand endpoints
+  BRANDS: '/brands',
+  BRAND_BY_ID: (id: string) => `/brands/${id}`,
+
+  // City endpoints
+  CITIES: '/cities',
+  CITY_BY_ID: (id: string) => `/cities/${id}`,
+
+  // Supplier endpoints
+  SUPPLIERS: '/suppliers',
+  SUPPLIER_BY_ID: (id: string) => `/suppliers/${id}`,
+
+  // Customer endpoints
+  CUSTOMERS: '/customers',
+  CUSTOMER_BY_ID: (id: string) => `/customers/${id}`,
+
+  // Salesman endpoints
+  SALESMEN: '/salesmen',
+  SALESMAN_BY_ID: (id: string) => `/salesmen/${id}`,
 } as const;
 

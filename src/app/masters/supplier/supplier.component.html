@@ -1,0 +1,233 @@
+<p-toast />
+<p-confirmdialog [style]="{ width: '450px' }" />
+
+<p-toolbar styleClass="mb-6">
+    <ng-template #start>
+        <p-button label="New" icon="pi pi-plus" severity="secondary" class="mr-2" (onClick)="openNew()" />
+        <p-button severity="secondary" label="Delete" icon="pi pi-trash" outlined (onClick)="deleteSelectedSuppliers()" [disabled]="!selectedSuppliers || !selectedSuppliers.length" />
+    </ng-template>
+    <ng-template #end>
+        <p-button label="Export" icon="pi pi-upload" severity="secondary" (onClick)="dt.exportCSV()" />
+    </ng-template>
+</p-toolbar>
+
+<p-table
+    #dt
+    [value]="suppliers()"
+    [rows]="10"
+    [columns]="cols"
+    [paginator]="true"
+    [globalFilterFields]="['code', 'name', 'cityId']"
+    [tableStyle]="{ 'min-width': '50rem' }"
+    [(selection)]="selectedSuppliers"
+    [rowHover]="true"
+    dataKey="id"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} suppliers"
+    [showCurrentPageReport]="true"
+    [rowsPerPageOptions]="[10, 20, 30]"
+>
+    <ng-template #caption>
+        <div class="flex items-center justify-between">
+            <h5 class="m-0">Manage Suppliers</h5>
+            <p-iconfield>
+                <p-inputicon styleClass="pi pi-search" />
+                <input pInputText type="text" (input)="dt.filterGlobal($event.target.value, 'contains')" placeholder="Search..." />
+            </p-iconfield>
+        </div>
+    </ng-template>
+    <ng-template #header>
+        <tr>
+            <th style="width: 3rem">
+                <p-tableHeaderCheckbox />
+            </th>
+            <th style="min-width: 8rem">Code</th>
+            <th style="min-width: 16rem">Name</th>
+            <th style="min-width: 12rem">City</th>
+            <th style="min-width: 10rem">Disc %</th>
+            <th style="min-width: 10rem">Term</th>
+            <th style="min-width: 8rem">Status</th>
+            <th style="min-width: 8rem"></th>
+        </tr>
+    </ng-template>
+    <ng-template #body let-supplier>
+        <tr>
+            <td style="width: 3rem">
+                <p-tableCheckbox [value]="supplier" />
+            </td>
+            <td>{{ supplier.code }}</td>
+            <td>{{ supplier.name }}</td>
+            <td>{{ getCityName(supplier.cityId) }}</td>
+            <td>{{ supplier.discount | number:'1.2-2' }}</td>
+            <td>{{ supplier.term }}</td>
+            <td>
+                <p-tag [value]="supplier.isSuspended ? 'Suspended' : 'Active'" [severity]="supplier.isSuspended ? 'danger' : 'success'" />
+            </td>
+            <td>
+                <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true" (click)="editSupplier(supplier)" />
+                <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true" (click)="deleteSupplier(supplier)" />
+            </td>
+        </tr>
+    </ng-template>
+</p-table>
+
+<p-dialog [(visible)]="supplierDialog" [style]="{ width: '95vw', maxWidth: '1400px' }" [modal]="true" [closable]="true" [draggable]="false" [resizable]="true">
+    <ng-template #header>
+        <div class="flex items-center gap-2">
+            <i class="pi pi-truck text-2xl"></i>
+            <span class="font-bold text-xl">Supplier Details</span>
+        </div>
+    </ng-template>
+    <ng-template #content>
+        <div class="grid grid-cols-12 gap-6 mt-4">
+            <!-- Left Column - Supplier Information -->
+            <div class="col-span-12 lg:col-span-7">
+                <div class="card">
+                    <h6 class="mb-4 font-semibold text-lg">Supplier Information</h6>
+                    <div class="grid grid-cols-12 gap-4">
+                        <!-- Code -->
+                        <div class="col-span-12 md:col-span-6">
+                            <label for="code" class="block font-bold mb-2">Code <span class="text-red-500">*</span></label>
+                            <input type="text" pInputText id="code" [(ngModel)]="supplier.code" required autofocus fluid class="w-full" />
+                            <small class="text-red-500" *ngIf="submitted && !supplier.code">Code is required.</small>
+                        </div>
+
+                        <!-- Name -->
+                        <div class="col-span-12 md:col-span-6">
+                            <label for="name" class="block font-bold mb-2">Name <span class="text-red-500">*</span></label>
+                            <input type="text" pInputText id="name" [(ngModel)]="supplier.name" required fluid class="w-full" />
+                            <small class="text-red-500" *ngIf="submitted && !supplier.name">Name is required.</small>
+                        </div>
+
+                        <!-- City -->
+                        <div class="col-span-12 md:col-span-6">
+                            <label for="cityId" class="block font-bold mb-2">City</label>
+                            <p-select
+                                [(ngModel)]="supplier.cityId"
+                                [options]="cities()"
+                                optionLabel="description"
+                                optionValue="id"
+                                placeholder="Select City"
+                                fluid
+                                [showClear]="true"
+                            />
+                        </div>
+
+                        <!-- TIN (NPWP) -->
+                        <div class="col-span-12 md:col-span-6">
+                            <label for="npwp" class="block font-bold mb-2">TIN</label>
+                            <input type="text" pInputText id="npwp" [(ngModel)]="supplier.npwp" fluid />
+                        </div>
+
+                        <!-- Address -->
+                        <div class="col-span-12">
+                            <label for="address" class="block font-bold mb-2">Address</label>
+                            <textarea id="address" pTextarea [(ngModel)]="supplier.address1" rows="3" cols="30" fluid placeholder="Enter address..."></textarea>
+                        </div>
+
+                        <!-- Discount -->
+                        <div class="col-span-12 md:col-span-6">
+                            <label for="discount" class="block font-bold mb-2">Disc %</label>
+                            <p-inputnumber id="discount" [(ngModel)]="supplier.discount" mode="decimal" [min]="0" [maxFractionDigits]="2" fluid />
+                        </div>
+
+                        <!-- Term (Due Date) -->
+                        <div class="col-span-12 md:col-span-6">
+                            <label for="term" class="block font-bold mb-2">Term (Days)</label>
+                            <p-inputnumber id="term" [(ngModel)]="supplier.term" mode="decimal" [min]="0" fluid />
+                        </div>
+
+                        <!-- Created Date -->
+                        <div class="col-span-12 md:col-span-6">
+                            <label for="createDate" class="block font-bold mb-2">Created</label>
+                            <p-datepicker [(ngModel)]="supplier.createDate" [showIcon]="true" dateFormat="dd-mm-yy" fluid />
+                        </div>
+
+                        <!-- Last Date -->
+                        <div class="col-span-12 md:col-span-6">
+                            <label for="lastDate" class="block font-bold mb-2">Last</label>
+                            <p-datepicker [(ngModel)]="supplier.lastDate" [showIcon]="true" dateFormat="dd-mm-yy" fluid />
+                        </div>
+
+                        <!-- Frequency -->
+                        <div class="col-span-12 md:col-span-6">
+                            <label for="visitFrequency" class="block font-bold mb-2">Freq</label>
+                            <p-inputnumber id="visitFrequency" [(ngModel)]="supplier.visitFrequency" mode="decimal" [min]="0" fluid />
+                        </div>
+
+                        <!-- Credit Limit -->
+                        <div class="col-span-12 md:col-span-6">
+                            <label for="creditLimit" class="block font-bold mb-2">Credit Limit</label>
+                            <p-inputnumber id="creditLimit" [(ngModel)]="supplier.creditLimit" mode="decimal" [min]="0" [useGrouping]="true" fluid />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Additional Details & Image -->
+            <div class="col-span-12 lg:col-span-5">
+                <div class="card mb-4">
+                    <h6 class="mb-4 font-semibold text-lg">Additional Information</h6>
+                    <div class="grid grid-cols-12 gap-4">
+                        <!-- Image Path -->
+                        <div class="col-span-12">
+                            <label for="imagePath" class="block font-bold mb-2">Image</label>
+                            <div class="flex gap-2">
+                                <input type="text" pInputText id="imagePath" [(ngModel)]="supplier.imagePath" fluid class="flex-1" placeholder="Image path..." />
+                                <p-button icon="pi pi-ellipsis-h" [rounded]="true" [text]="true" (onClick)="fileInput.click()" />
+                                <input #fileInput type="file" accept="image/*" style="display: none" (change)="onImageSelect($event)" />
+                            </div>
+                        </div>
+
+                        <!-- Image Display -->
+                        <div class="col-span-12">
+                            <div class="border-2 border-dashed border-surface-300 dark:border-surface-700 rounded-border p-4 bg-surface-50 dark:bg-surface-900" style="min-height: 200px;">
+                                <div *ngIf="supplier.imagePath" class="flex items-center justify-center h-full">
+                                    <img [src]="supplier.imagePath" [alt]="supplier.name" class="max-w-full max-h-48 object-contain" />
+                                </div>
+                                <div *ngIf="!supplier.imagePath" class="flex items-center justify-center h-full text-muted-color">
+                                    <div class="text-center">
+                                        <i class="pi pi-image text-4xl mb-2"></i>
+                                        <p>No image selected</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="col-span-12">
+                            <label for="email" class="block font-bold mb-2">Email</label>
+                            <input type="email" pInputText id="email" [(ngModel)]="supplier.email" fluid />
+                        </div>
+
+                        <!-- Email 2 -->
+                        <div class="col-span-12">
+                            <label for="email2" class="block font-bold mb-2">Email 2</label>
+                            <input type="email" pInputText id="email2" [(ngModel)]="supplier.email2" fluid />
+                        </div>
+
+                        <!-- Memo -->
+                        <div class="col-span-12">
+                            <label for="memo" class="block font-bold mb-2">Memo</label>
+                            <textarea id="memo" pTextarea [(ngModel)]="supplier.memo" rows="4" cols="30" fluid placeholder="Enter memo..."></textarea>
+                        </div>
+
+                        <!-- Suspended Checkbox -->
+                        <div class="col-span-12">
+                            <div class="flex items-center gap-2">
+                                <p-checkbox [(ngModel)]="supplier.isSuspended" binary inputId="isSuspended" />
+                                <label for="isSuspended" class="cursor-pointer">Suspended</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-template>
+    <ng-template #footer>
+        <div class="flex justify-end gap-2">
+            <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
+            <p-button label="Save" icon="pi pi-check" (click)="saveSupplier()" />
+        </div>
+    </ng-template>
+</p-dialog>
+

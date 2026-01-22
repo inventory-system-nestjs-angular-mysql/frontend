@@ -19,7 +19,7 @@ export class AppMenu {
     model: MenuItem[] = [];
 
     ngOnInit() {
-    this.model = [
+        this.model = [
             {
                 label: 'Home',
                 items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', routerLink: ['/'] }]
@@ -28,6 +28,32 @@ export class AppMenu {
                 label: 'Masters',
                 icon: 'pi pi-fw pi-database',
                 items: [
+
+                    {
+                        label: 'Unit',
+                        icon: 'pi pi-fw pi-cog',
+                        routerLink: ['/app/masters/unit']
+                    },
+                    {
+                        label: 'Bank',
+                        icon: 'pi pi-fw pi-building',
+                        routerLink: ['/app/masters/bank']
+                    },
+                    {
+                        label: 'Warehouse',
+                        icon: 'pi pi-fw pi-inbox',
+                        routerLink: ['/app/masters/warehouse']
+                    },
+                    {
+                        label: 'Brand',
+                        icon: 'pi pi-fw pi-tag',
+                        routerLink: ['/app/masters/brand']
+                    },
+                    {
+                        label: 'City',
+                        icon: 'pi pi-fw pi-map-marker',
+                        routerLink: ['/app/masters/city']
+                    },
                     {
                         label: 'Stock Group',
                         icon: 'pi pi-fw pi-th-large',
@@ -38,11 +64,21 @@ export class AppMenu {
                         icon: 'pi pi-fw pi-box',
                         routerLink: ['/app/masters/stock']
                     },
+                     {
+                        label: 'Supplier',
+                        icon: 'pi pi-fw pi-box',
+                        routerLink: ['/app/masters/supplier']
+                    },
                     {
-                        label: 'Unit',
-                        icon: 'pi pi-fw pi-cog',
-                        routerLink: ['/app/masters/unit']
-                    }
+                        label: 'Customer',
+                        icon: 'pi pi-fw pi-box',
+                        routerLink: ['/app/masters/customer']
+                    },
+                    {
+                        label: 'Salesman',
+                        icon: 'pi pi-fw pi-box',
+                        routerLink: ['/app/masters/salesman']
+                    },
                 ]
             },
         ];

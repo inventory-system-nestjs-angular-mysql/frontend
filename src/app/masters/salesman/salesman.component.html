@@ -1,0 +1,173 @@
+<p-toast />
+<p-confirmdialog [style]="{ width: '450px' }" />
+
+<p-toolbar styleClass="mb-6">
+    <ng-template #start>
+        <p-button label="New" icon="pi pi-plus" severity="secondary" class="mr-2" (onClick)="openNew()" />
+        <p-button severity="secondary" label="Delete" icon="pi pi-trash" outlined (onClick)="deleteSelectedSalesmen()" [disabled]="!selectedSalesmen || !selectedSalesmen.length" />
+    </ng-template>
+    <ng-template #end>
+        <p-button label="Export" icon="pi pi-upload" severity="secondary" (onClick)="dt.exportCSV()" />
+    </ng-template>
+</p-toolbar>
+
+<p-table
+    #dt
+    [value]="salesmen()"
+    [rows]="10"
+    [columns]="cols"
+    [paginator]="true"
+    [globalFilterFields]="['name', 'address1']"
+    [tableStyle]="{ 'min-width': '50rem' }"
+    [(selection)]="selectedSalesmen"
+    [rowHover]="true"
+    dataKey="id"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} salesmen"
+    [showCurrentPageReport]="true"
+    [rowsPerPageOptions]="[10, 20, 30]"
+>
+    <ng-template #caption>
+        <div class="flex items-center justify-between">
+            <h5 class="m-0">Manage Salesmen</h5>
+            <p-iconfield>
+                <p-inputicon styleClass="pi pi-search" />
+                <input pInputText type="text" (input)="dt.filterGlobal($event.target.value, 'contains')" placeholder="Search..." />
+            </p-iconfield>
+        </div>
+    </ng-template>
+    <ng-template #header>
+        <tr>
+            <th style="width: 3rem">
+                <p-tableHeaderCheckbox />
+            </th>
+            <th style="min-width: 12rem">Name</th>
+            <th style="min-width: 16rem">Address</th>
+            <th style="min-width: 10rem">Commission</th>
+            <th style="min-width: 12rem">Last Transaction</th>
+            <th style="min-width: 8rem">Status</th>
+            <th style="min-width: 8rem"></th>
+        </tr>
+    </ng-template>
+    <ng-template #body let-salesman>
+        <tr>
+            <td style="width: 3rem">
+                <p-tableCheckbox [value]="salesman" />
+            </td>
+            <td>{{ salesman.name }}</td>
+            <td>{{ salesman.address1 || '-' }}</td>
+            <td>{{ salesman.commission ? (salesman.commission | number:'1.2-2') + ' %' : '-' }}</td>
+            <td>{{ salesman.lastDate ? (salesman.lastDate | date:'short') : '-' }}</td>
+            <td>
+                <p-tag [value]="salesman.isSuspended ? 'Suspended' : 'Active'" [severity]="salesman.isSuspended ? 'danger' : 'success'" />
+            </td>
+            <td>
+                <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true" (click)="editSalesman(salesman)" />
+                <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true" (click)="deleteSalesman(salesman)" />
+            </td>
+        </tr>
+    </ng-template>
+</p-table>
+
+<p-dialog [(visible)]="salesmanDialog" [style]="{ width: '95vw', maxWidth: '1200px' }" [modal]="true" [closable]="true" [draggable]="false" [resizable]="true">
+    <ng-template #header>
+        <div class="flex items-center gap-2">
+            <i class="pi pi-user text-2xl"></i>
+            <span class="font-bold text-xl">Salesman Details</span>
+        </div>
+    </ng-template>
+    <ng-template #content>
+        <div class="grid grid-cols-12 gap-6 mt-4">
+            <!-- Left Column - Salesman Information -->
+            <div class="col-span-12 lg:col-span-7">
+                <div class="card">
+                    <h6 class="mb-4 font-semibold text-lg">Salesman Information</h6>
+                    <div class="grid grid-cols-12 gap-4">
+                        <!-- Name -->
+                        <div class="col-span-12">
+                            <label for="name" class="block font-bold mb-2">Salesman <span class="text-red-500">*</span></label>
+                            <input type="text" pInputText id="name" [(ngModel)]="salesman.name" required autofocus fluid class="w-full" />
+                            <small class="text-red-500" *ngIf="submitted && !salesman.name">Name is required.</small>
+                        </div>
+
+                        <!-- Address 1 -->
+                        <div class="col-span-12">
+                            <label for="address1" class="block font-bold mb-2">Address</label>
+                            <input type="text" pInputText id="address1" [(ngModel)]="salesman.address1" fluid />
+                        </div>
+
+                        <!-- Address 2 -->
+                        <div class="col-span-12">
+                            <input type="text" pInputText id="address2" [(ngModel)]="salesman.address2" fluid />
+                        </div>
+
+                        <!-- Address 3 -->
+                        <div class="col-span-12">
+                            <input type="text" pInputText id="address3" [(ngModel)]="salesman.address3" fluid />
+                        </div>
+
+                        <!-- Last Transaction -->
+                        <div class="col-span-12 md:col-span-6">
+                            <label for="lastDate" class="block font-bold mb-2">Last Transaction</label>
+                            <p-datepicker [(ngModel)]="salesman.lastDate" [showIcon]="true" dateFormat="dd-mm-yy" fluid />
+                        </div>
+
+                        <!-- Commission -->
+                        <div class="col-span-12 md:col-span-6">
+                            <label for="commission" class="block font-bold mb-2">Commission (A)</label>
+                            <p-inputnumber id="commission" [(ngModel)]="salesman.commission" mode="decimal" [min]="0" [max]="100" [maxFractionDigits]="2" suffix=" %" fluid />
+                        </div>
+
+                        <!-- Image Path -->
+                        <div class="col-span-12">
+                            <label for="imagePath" class="block font-bold mb-2">Image</label>
+                            <div class="flex gap-2">
+                                <input type="text" pInputText id="imagePath" [(ngModel)]="salesman.imagePath" fluid class="flex-1" placeholder="Image path..." />
+                                <p-button icon="pi pi-ellipsis-h" [rounded]="true" [text]="true" (onClick)="fileInput.click()" />
+                                <input #fileInput type="file" accept="image/*" style="display: none" (change)="onImageSelect($event)" />
+                            </div>
+                        </div>
+
+                        <!-- Memo -->
+                        <div class="col-span-12">
+                            <label for="memo" class="block font-bold mb-2">Memo</label>
+                            <textarea id="memo" pTextarea [(ngModel)]="salesman.memo" rows="4" cols="30" fluid placeholder="Enter memo..."></textarea>
+                        </div>
+
+                        <!-- Suspended Checkbox -->
+                        <div class="col-span-12">
+                            <div class="flex items-center gap-2">
+                                <p-checkbox [(ngModel)]="salesman.isSuspended" binary inputId="isSuspended" />
+                                <label for="isSuspended" class="cursor-pointer">Suspended</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Image Display -->
+            <div class="col-span-12 lg:col-span-5">
+                <div class="card">
+                    <h6 class="mb-4 font-semibold text-lg">Salesman Image</h6>
+                    <div class="border-2 border-dashed border-surface-300 dark:border-surface-700 rounded-border p-4 bg-surface-50 dark:bg-surface-900" style="min-height: 400px;">
+                        <div *ngIf="salesman.imagePath" class="flex items-center justify-center h-full">
+                            <img [src]="salesman.imagePath" [alt]="salesman.name" class="max-w-full max-h-96 object-contain" />
+                        </div>
+                        <div *ngIf="!salesman.imagePath" class="flex items-center justify-center h-full text-muted-color">
+                            <div class="text-center">
+                                <i class="pi pi-image text-4xl mb-2"></i>
+                                <p>No image selected</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-template>
+    <ng-template #footer>
+        <div class="flex justify-end gap-2">
+            <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
+            <p-button label="Save" icon="pi pi-check" (click)="saveSalesman()" />
+        </div>
+    </ng-template>
+</p-dialog>
+

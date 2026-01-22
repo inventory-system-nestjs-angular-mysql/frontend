@@ -18,6 +18,7 @@ import { TagModule } from 'primeng/tag';
 import { InputIconModule } from 'primeng/inputicon';
 import { IconFieldModule } from 'primeng/iconfield';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TooltipModule } from 'primeng/tooltip';
 
 // StockGroup interface imported from service
 
@@ -37,7 +38,8 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
         TagModule,
         InputIconModule,
         IconFieldModule,
-        ConfirmDialogModule
+        ConfirmDialogModule,
+
     ],
     templateUrl: './stockgroup.component.html',
     providers: [MessageService, ConfirmationService]
@@ -129,7 +131,8 @@ export class StockGroupComponent implements OnInit {
                         this.stockGroup = {};
                         this.messageService.add({ severity: 'success', summary: 'Successful', detail: 'Stock Group Deleted', life: 3000 });
                     },
-                    error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete Stock Group' })
+                    // error: () => {}
+                    error: (error) => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete Stock Group' })
                 });
             }
         });
