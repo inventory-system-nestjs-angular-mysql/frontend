@@ -39,5 +39,18 @@ export class CustomerService extends BaseApiService {
       `${this.baseUrl}${API_ENDPOINTS.INVOICES_BY_CUSTOMER(customerId)}`
     );
   }
+
+  createCustomerInvoices(customerId: string, invoices: any[]): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}${API_ENDPOINTS.INVOICES}/customer/${customerId}/bulk`,
+      { invoices }
+    );
+  }
+
+  deleteInvoice(invoiceId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.baseUrl}${API_ENDPOINTS.INVOICE_BY_ID(invoiceId)}`
+    );
+  }
 }
 

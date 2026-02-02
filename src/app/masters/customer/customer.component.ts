@@ -9,7 +9,9 @@ import {
   CreateCustomerModel,
   CustomerResponseModel,
   CustomerInvoiceModel,
+  EditableInvoiceModel,
 } from '../../core/models/customer';
+import { DateUtil } from '../../core/utils/date.util';
 import { CityResponseModel } from '../../core/models/city/city-response.model';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { UploadService } from '../../core/services/upload.service';
@@ -70,6 +72,7 @@ export class CustomerComponent implements OnInit {
     selectedCustomers: CustomerResponseModel[] = [];
     submitted = false;
     customerInvoices = signal<CustomerInvoiceModel[]>([]);
+    editableInvoices = signal<EditableInvoiceModel[]>([]);
     cols = [
         { field: 'code', header: 'Code' },
         { field: 'name', header: 'Name' },
@@ -170,6 +173,7 @@ export class CustomerComponent implements OnInit {
             gender: 0 // Default to Male
         };
         this.customerInvoices.set([]);
+        this.editableInvoices.set([]);
         this.submitted = false;
         this.customerDialog = true;
     }
@@ -217,7 +221,28 @@ export class CustomerComponent implements OnInit {
             gender: customer.gender ?? 0,
             nik: customer.nik ?? undefined
         };
-        this.loadCustomerInvoices(customer.id);
+        this.customerInvoices.set([]);
+        this.editableInvoices.set([]);
+        this.customerService.getCustomerInvoices(customer.id).subscribe({
+            next: (data) => {
+                this.customerInvoices.set(data);
+                const editable = data.map(inv => ({
+                    id: inv.id,
+                    invoice: inv.invoice,
+                    date: inv.date ? new Date(inv.date) : null,
+                    warehouse: inv.warehouse || null,
+                    currency: inv.currency || null,
+                    amount: inv.amount || null,
+                    remark: inv.remark || null,
+                    rem: inv.rem || null
+                }));
+                this.editableInvoices.set(editable);
+            },
+            error: () => {
+                this.customerInvoices.set([]);
+                this.editableInvoices.set([]);
+            }
+        });
         this.customerDialog = true;
     }
 
@@ -241,6 +266,7 @@ export class CustomerComponent implements OnInit {
         this.customerDialog = false;
         this.submitted = false;
         this.customerInvoices.set([]);
+        this.editableInvoices.set([]);
     }
 
     deleteCustomer(customer: CustomerResponseModel) {
@@ -263,34 +289,53 @@ export class CustomerComponent implements OnInit {
 
     saveCustomer() {
         this.submitted = true;
-        if (this.customer.code?.trim() && this.customer.name?.trim()) {
-            const customerToSend = { ...this.customer };
+        if (!this.customer.code?.trim() || !this.customer.name?.trim()) {
+            return;
+        }
+        const customerToSend = {
+            ...this.customer,
+            createDate: DateUtil.toDateOnlyString(this.customer.createDate) ?? undefined,
+            lastDate: DateUtil.toDateOnlyString(this.customer.lastDate) ?? undefined,
+            birthday: DateUtil.toDateOnlyString(this.customer.birthday) ?? undefined
+        };
 
-            if (this.customer.id) {
-                // Update
-                const { id, ...updateDto } = customerToSend;
-                this.customerService.updateCustomer(id!, updateDto).subscribe({
-                    next: () => {
-                        this.loadCustomers();
-                        this.messageService.add({ severity: 'success', summary: 'Successful', detail: 'Customer Updated', life: 3000 });
-                        this.customerDialog = false;
-                        this.customer = {};
-                    },
-                    error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to update Customer' })
-                });
-            } else {
-                // Create
-                const { id, ...createDto } = customerToSend;
-                this.customerService.createCustomer(createDto as CreateCustomerModel).subscribe({
-                    next: () => {
-                        this.loadCustomers();
-                        this.messageService.add({ severity: 'success', summary: 'Successful', detail: 'Customer Created', life: 3000 });
-                        this.customerDialog = false;
-                        this.customer = {};
-                    },
-                    error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to create Customer' })
-                });
-            }
+        const invoices = this.editableInvoices();
+        const invalidInvoices = invoices.filter(inv =>
+            !inv.invoice?.trim() || !inv.date || !inv.warehouse || !inv.currency || !inv.amount || inv.amount <= 0
+        );
+        const invoiceNumbers = invoices.map(inv => inv.invoice?.trim()).filter(Boolean);
+        const duplicates = invoiceNumbers.filter((inv, idx, arr) => arr.indexOf(inv) !== idx);
+        if (invalidInvoices.length > 0 || duplicates.length > 0) {
+            this.saveCustomerInvoices('validate-only');
+            return;
+        }
+
+        if (this.customer.id) {
+            const { id, ...updateDto } = customerToSend;
+            this.customerService.updateCustomer(id!, updateDto as Partial<CreateCustomerModel>).subscribe({
+                next: () => {
+                    this.saveCustomerInvoices(id!);
+                    this.loadCustomers();
+                    this.messageService.add({ severity: 'success', summary: 'Successful', detail: 'Customer Updated', life: 3000 });
+                    this.customerDialog = false;
+                    this.customer = {};
+                    this.editableInvoices.set([]);
+                },
+                error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to update Customer' })
+            });
+        } else {
+            const { id, ...createDto } = customerToSend;
+            this.customerService.createCustomer(createDto as unknown as CreateCustomerModel).subscribe({
+                next: (createdCustomer) => {
+                    this.saveCustomerInvoices(createdCustomer.id);
+                    this.loadCustomers();
+                    this.messageService.add({ severity: 'success', summary: 'Successful', detail: 'Customer Created', life: 3000 });
+                    this.customerDialog = false;
+                    this.customer = {};
+                    this.editableInvoices.set([]);
+                },
+                error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to create Customer' })
+            });
         }
     }
 
@@ -357,6 +402,121 @@ export class CustomerComponent implements OnInit {
             minimumFractionDigits: 2, 
             maximumFractionDigits: 2 
         }).format(amount);
+    }
+
+    addInvoiceRow() {
+        const newInvoice: EditableInvoiceModel = {
+            invoice: '',
+            date: new Date(),
+            warehouse: null,
+            currency: null,
+            amount: null,
+            remark: null
+        };
+        this.editableInvoices.set([...this.editableInvoices(), newInvoice]);
+    }
+
+    removeInvoiceRow(index: number) {
+        const invoices = [...this.editableInvoices()];
+        const invoiceToRemove = invoices[index];
+        if (invoiceToRemove.id) {
+            this.confirmationService.confirm({
+                message: 'Are you sure you want to delete this invoice?',
+                header: 'Confirm',
+                icon: 'pi pi-exclamation-triangle',
+                accept: () => {
+                    this.customerService.deleteInvoice(invoiceToRemove.id!).subscribe({
+                        next: () => {
+                            invoices.splice(index, 1);
+                            this.editableInvoices.set(invoices);
+                            this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Invoice deleted successfully' });
+                        },
+                        error: () => {
+                            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete invoice' });
+                        }
+                    });
+                }
+            });
+        } else {
+            invoices.splice(index, 1);
+            this.editableInvoices.set(invoices);
+        }
+    }
+
+    saveCustomerInvoices(customerId: string) {
+        if (customerId === 'validate-only') {
+            const invoices = this.editableInvoices();
+            const invalidInvoices = invoices.filter(inv =>
+                !inv.invoice?.trim() || !inv.date || !inv.warehouse || !inv.currency || !inv.amount || inv.amount <= 0
+            );
+            if (invalidInvoices.length > 0) {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Validation Error',
+                    detail: 'Please fill all required invoice fields (Invoice, Date, Warehouse, Currency, Amount > 0)'
+                });
+            }
+            const invoiceNumbers = invoices.map(inv => inv.invoice?.trim()).filter(Boolean);
+            const duplicates = invoiceNumbers.filter((inv, idx, arr) => arr.indexOf(inv) !== idx);
+            if (duplicates.length > 0) {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Duplicate Invoice',
+                    detail: `Duplicate invoice number(s) found: ${[...new Set(duplicates)].join(', ')}`
+                });
+            }
+            return;
+        }
+        const invoices = this.editableInvoices();
+        const invalidInvoices = invoices.filter(inv =>
+            !inv.invoice?.trim() || !inv.date || !inv.warehouse || !inv.currency || !inv.amount || inv.amount <= 0
+        );
+        const invoiceNumbers = invoices.map(inv => inv.invoice?.trim()).filter(Boolean);
+        const duplicates = invoiceNumbers.filter((inv, idx, arr) => arr.indexOf(inv) !== idx);
+        if (invalidInvoices.length > 0 || duplicates.length > 0) {
+            return;
+        }
+        const invoicesToSend = invoices.map(inv => ({
+            id: inv.id || undefined,
+            refNo: inv.invoice!.trim(),
+            date: DateUtil.toDateOnlyString(inv.date) ?? (typeof inv.date === 'string' ? inv.date : ''),
+            warehouseId: inv.warehouse!,
+            exchangeId: inv.currency!,
+            value: inv.amount!,
+            remark: inv.remark ?? null,
+            salesmanId: '..default..............',
+            opening: 1
+        }));
+        this.customerService.createCustomerInvoices(customerId, invoicesToSend).subscribe({
+            next: () => {
+                if (this.customerDialog) {
+                    this.customerService.getCustomerInvoices(customerId).subscribe({
+                        next: (invoiceData) => {
+                            this.customerInvoices.set(invoiceData);
+                            const editable = invoiceData.map(inv => ({
+                                id: inv.id,
+                                invoice: inv.invoice,
+                                date: inv.date ? new Date(inv.date) : null,
+                                warehouse: inv.warehouse || null,
+                                currency: inv.currency || null,
+                                amount: inv.amount || null,
+                                remark: inv.remark || null,
+                                rem: inv.rem || null
+                            }));
+                            this.editableInvoices.set(editable);
+                        },
+                        error: () => {}
+                    });
+                }
+            },
+            error: (error) => {
+                this.messageService.add({
+                    severity: 'warn',
+                    summary: 'Warning',
+                    detail: 'Customer saved but some invoices may not have been saved: ' + (error.error?.message || 'Unknown error')
+                });
+            }
+        });
     }
 
     getImageUrl(path: string | null | undefined): string {
