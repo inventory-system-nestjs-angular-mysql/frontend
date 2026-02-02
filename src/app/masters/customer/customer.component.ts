@@ -1,6 +1,10 @@
 import { Component, OnInit, signal, ViewChild } from '@angular/core';
 import { CustomerService } from './customer.service';
 import { CityService } from '../city/city.service';
+import { WarehouseService } from '../warehouse/warehouse.service';
+import { WarehouseResponseModel } from '../../core/models/warehouse/warehouse-response.model';
+import { CurrencyService } from '../currency/currency.service';
+import { CurrencyResponseModel } from '../../core/models/currency/currency-response.model';
 import {
   CreateCustomerModel,
   CustomerResponseModel,
@@ -8,6 +12,7 @@ import {
 } from '../../core/models/customer';
 import { CityResponseModel } from '../../core/models/city/city-response.model';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { UploadService } from '../../core/services/upload.service';
 import { Table, TableModule } from 'primeng/table';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -59,6 +64,8 @@ export class CustomerComponent implements OnInit {
     customerDialog = false;
     customers = signal<CustomerResponseModel[]>([]);
     cities = signal<CityResponseModel[]>([]);
+    warehouses = signal<WarehouseResponseModel[]>([]);
+    currencies = signal<CurrencyResponseModel[]>([]);
     customer: Partial<CreateCustomerModel & { id?: string }> = {};
     selectedCustomers: CustomerResponseModel[] = [];
     submitted = false;
@@ -96,12 +103,43 @@ export class CustomerComponent implements OnInit {
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
         private customerService: CustomerService,
-        private cityService: CityService
+        private cityService: CityService,
+        private warehouseService: WarehouseService,
+        private currencyService: CurrencyService,
+        private uploadService: UploadService
     ) {}
+
 
     ngOnInit() {
         this.loadCustomers();
         this.loadCities();
+        this.loadWarehouses();
+        this.loadCurrencies();
+    }
+
+    loadWarehouses() {
+        this.warehouseService.getWarehouses().subscribe({
+            next: (data) => this.warehouses.set(data),
+            error: () => console.error('Failed to load warehouses')
+        });
+    }
+
+    loadCurrencies() {
+        this.currencyService.getCurrencies().subscribe({
+            next: (data) => this.currencies.set(data),
+            error: () => console.error('Failed to load currencies')
+        });
+    }
+    getWarehouseDescription(warehouseId: string | null | undefined): string {
+        if (!warehouseId) return '';
+        const warehouse = this.warehouses().find(w => w.id === warehouseId);
+        return warehouse?.description || '';
+    }
+
+    getCurrencyDescription(currencyId: string | null | undefined): string {
+        if (!currencyId) return '';
+        const currency = this.currencies().find(c => c.id === currencyId);
+        return currency?.currency || '';
     }
 
     loadCustomers() {
@@ -227,7 +265,7 @@ export class CustomerComponent implements OnInit {
         this.submitted = true;
         if (this.customer.code?.trim() && this.customer.name?.trim()) {
             const customerToSend = { ...this.customer };
-            
+
             if (this.customer.id) {
                 // Update
                 const { id, ...updateDto } = customerToSend;
@@ -257,9 +295,26 @@ export class CustomerComponent implements OnInit {
     }
 
     onImageSelect(event: any) {
-        const file = event.files[0];
+        const file = event.target?.files?.[0] || event.files?.[0];
         if (file) {
-            this.customer.imagePath = file.name;
+            // Upload the image
+            this.uploadService.uploadImage(file).subscribe({
+                next: (response) => {
+                    this.customer.imagePath = response.path;
+                    this.messageService.add({ 
+                        severity: 'success', 
+                        summary: 'Success', 
+                        detail: 'Image uploaded successfully' 
+                    });
+                },
+                error: (error) => {
+                    this.messageService.add({ 
+                        severity: 'error', 
+                        summary: 'Error', 
+                        detail: error.error?.message || 'Failed to upload image' 
+                    });
+                }
+            });
         }
     }
 
@@ -277,21 +332,17 @@ export class CustomerComponent implements OnInit {
     }
 
     loadCustomerInvoices(customerId: string) {
-        // TODO: Replace with actual API call when backend endpoint is available
-        // For now, using empty array or mock data
-        this.customerInvoices.set([]);
-        // Example mock data (uncomment to test):
-        // this.customerInvoices.set([
-        //     {
-        //         invoice: 'INV-001',
-        //         date: new Date(),
-        //         warehouse: 'WH-001',
-        //         currency: 'IDR',
-        //         amount: 1000000,
-        //         remark: 'Test invoice',
-        //         rem: 500000
-        //     }
-        // ]);
+        if (!customerId) {
+            this.customerInvoices.set([]);
+            return;
+        }
+        this.customerService.getCustomerInvoices(customerId).subscribe({
+            next: (data) => this.customerInvoices.set(data),
+            error: () => {
+                this.customerInvoices.set([]);
+                // Silently fail - invoices are optional
+            }
+        });
     }
 
     formatDate(date: Date | string | null | undefined): string {
@@ -306,6 +357,10 @@ export class CustomerComponent implements OnInit {
             minimumFractionDigits: 2, 
             maximumFractionDigits: 2 
         }).format(amount);
+    }
+
+    getImageUrl(path: string | null | undefined): string {
+        return this.uploadService.getImageUrl(path);
     }
 }
 

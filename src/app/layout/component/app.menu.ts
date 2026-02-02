@@ -55,6 +55,11 @@ export class AppMenu {
                         routerLink: ['/app/masters/city']
                     },
                     {
+                        label: 'Currency',
+                        icon: 'pi pi-fw pi-map-marker',
+                        routerLink: ['/app/masters/currency']
+                    },
+                    {
                         label: 'Stock Group',
                         icon: 'pi pi-fw pi-th-large',
                         routerLink: ['/app/masters/stockgroup']

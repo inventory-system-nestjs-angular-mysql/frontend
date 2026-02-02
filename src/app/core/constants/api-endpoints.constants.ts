@@ -44,5 +44,18 @@ export const API_ENDPOINTS = {
   // Salesman endpoints
   SALESMEN: '/salesmen',
   SALESMAN_BY_ID: (id: string) => `/salesmen/${id}`,
+
+  // Invoice endpoints
+  INVOICES: '/invoices',
+  INVOICE_BY_ID: (id: string) => `/invoices/${id}`,
+  INVOICES_BY_CUSTOMER: (customerId: string) => `/invoices/customer/${customerId}`,
+  INVOICES_BY_SUPPLIER: (supplierId: string) => `/invoices/supplier/${supplierId}`,
+
+  // Currency endpoints
+  CURRENCIES: '/currencies',
+  CURRENCY_BY_ID: (id: string) => `/currencies/${id}`,
+
+  // Upload endpoints
+  UPLOAD_IMAGE: '/upload/image',
 } as const;
 

@@ -7,7 +7,7 @@
  */
 export const environment = {
   production: true,
-  apiUrl: 'https://api.yourdomain.com/api', // TODO: Update with your production API URL
+  apiUrl: 'http://localhost:3000/api', // TODO: Update with your production API URL
   appName: 'Inventory Management System',
   version: '1.0.0'
 };

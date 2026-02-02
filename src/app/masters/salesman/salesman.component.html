@@ -150,7 +150,7 @@
                     <h6 class="mb-4 font-semibold text-lg">Salesman Image</h6>
                     <div class="border-2 border-dashed border-surface-300 dark:border-surface-700 rounded-border p-4 bg-surface-50 dark:bg-surface-900" style="min-height: 400px;">
                         <div *ngIf="salesman.imagePath" class="flex items-center justify-center h-full">
-                            <img [src]="salesman.imagePath" [alt]="salesman.name" class="max-w-full max-h-96 object-contain" />
+                            <img [src]="getImageUrl(salesman.imagePath)" [alt]="salesman.name" class="max-w-full max-h-96 object-contain" />
                         </div>
                         <div *ngIf="!salesman.imagePath" class="flex items-center justify-center h-full text-muted-color">
                             <div class="text-center">

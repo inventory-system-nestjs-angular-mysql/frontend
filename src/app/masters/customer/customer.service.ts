@@ -5,6 +5,7 @@ import { API_ENDPOINTS } from '../../core/constants/api-endpoints.constants';
 import {
   CreateCustomerModel,
   CustomerResponseModel,
+  CustomerInvoiceModel,
 } from '../../core/models/customer';
 
 @Injectable({ providedIn: 'root' })
@@ -31,6 +32,12 @@ export class CustomerService extends BaseApiService {
 
   deleteCustomer(id: string): Observable<void> {
     return this.delete<void>(id);
+  }
+
+  getCustomerInvoices(customerId: string): Observable<CustomerInvoiceModel[]> {
+    return this.http.get<CustomerInvoiceModel[]>(
+      `${this.baseUrl}${API_ENDPOINTS.INVOICES_BY_CUSTOMER(customerId)}`
+    );
   }
 }
 

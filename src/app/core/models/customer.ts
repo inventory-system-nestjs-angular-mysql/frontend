@@ -89,6 +89,7 @@ export interface CreateCustomerModel {
 }
 
 export interface CustomerInvoiceModel {
+  id: string; // Invoice ID
   invoice: string;
   date: Date | string;
   warehouse: string;
@@ -96,5 +97,16 @@ export interface CustomerInvoiceModel {
   amount: number;
   remark?: string | null;
   rem?: number | null; // Remaining amount
+}
+
+export interface EditableInvoiceModel {
+  id?: string; // Invoice ID - undefined for new invoices
+  invoice: string;
+  date: Date | string | null;
+  warehouse: string | null;
+  currency: string | null;
+  amount: number | null;
+  remark?: string | null;
+  rem?: number | null; // Remaining amount (calculated, not editable)
 }
 

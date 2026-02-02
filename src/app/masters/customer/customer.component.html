@@ -278,7 +278,7 @@
                         <div class="col-span-12">
                             <div class="border-2 border-dashed border-surface-300 dark:border-surface-700 rounded-border p-4 bg-surface-50 dark:bg-surface-900" style="min-height: 200px;">
                                 <div *ngIf="customer.imagePath" class="flex items-center justify-center h-full">
-                                    <img [src]="customer.imagePath" [alt]="customer.name" class="max-w-full max-h-48 object-contain" />
+                                    <img [src]="getImageUrl(customer.imagePath)" [alt]="customer.name" class="max-w-full max-h-48 object-contain" />
                                 </div>
                                 <div *ngIf="!customer.imagePath" class="flex items-center justify-center h-full text-muted-color">
                                     <div class="text-center">
@@ -334,8 +334,8 @@
                         <tr>
                             <td>{{ invoice.invoice }}</td>
                             <td>{{ formatDate(invoice.date) }}</td>
-                            <td>{{ invoice.warehouse }}</td>
-                            <td>{{ invoice.currency }}</td>
+                            <td>{{ getWarehouseDescription(invoice.warehouse) }}</td>
+                            <td>{{ getCurrencyDescription(invoice.currency) }}</td>
                             <td>{{ formatCurrency(invoice.amount) }}</td>
                             <td>{{ invoice.remark || '-' }}</td>
                             <td>{{ formatCurrency(invoice.rem) }}</td>

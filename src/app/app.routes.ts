@@ -14,6 +14,7 @@ import { CityComponent } from './masters/city/city.component';
 import { SupplierComponent } from './masters/supplier/supplier.component';
 import { CustomerComponent } from './masters/customer/customer.component';
 import { SalesmanComponent } from './masters/salesman/salesman.component';
+import { CurrencyComponent } from './masters/currency/currency.component';
 import { Login } from './pages/auth/login';
 
 export const routes: Routes = [
@@ -33,6 +34,7 @@ export const routes: Routes = [
             { path: 'masters/supplier', component: SupplierComponent },
             { path: 'masters/customer', component: CustomerComponent },
             { path: 'masters/salesman', component: SalesmanComponent },
+            { path: 'masters/currency', component: CurrencyComponent },
             { path: 'uikit', loadChildren: () => import('./pages/uikit/uikit.routes') },
             { path: 'documentation', component: Documentation },
             { path: 'pages', loadChildren: () => import('./pages/pages.routes') }

@@ -1,5 +1,6 @@
 import { Component, OnInit, signal, ViewChild } from '@angular/core';
 import { SalesmanService } from './salesman.service';
+import { UploadService } from '../../core/services/upload.service';
 import {
   CreateSalesmanModel,
   SalesmanResponseModel,
@@ -66,7 +67,8 @@ export class SalesmanComponent implements OnInit {
     constructor(
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
-        private salesmanService: SalesmanService
+        private salesmanService: SalesmanService,
+        private uploadService: UploadService
     ) {}
 
     ngOnInit() {
@@ -180,10 +182,31 @@ export class SalesmanComponent implements OnInit {
     }
 
     onImageSelect(event: any) {
-        const file = event.files[0];
+        const file = event.target?.files?.[0] || event.files?.[0];
         if (file) {
-            this.salesman.imagePath = file.name;
+            // Upload the image
+            this.uploadService.uploadImage(file).subscribe({
+                next: (response) => {
+                    this.salesman.imagePath = response.path;
+                    this.messageService.add({ 
+                        severity: 'success', 
+                        summary: 'Success', 
+                        detail: 'Image uploaded successfully' 
+                    });
+                },
+                error: (error) => {
+                    this.messageService.add({ 
+                        severity: 'error', 
+                        summary: 'Error', 
+                        detail: error.error?.message || 'Failed to upload image' 
+                    });
+                }
+            });
         }
+    }
+
+    getImageUrl(path: string | null | undefined): string {
+        return this.uploadService.getImageUrl(path);
     }
 }
 

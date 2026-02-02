@@ -286,7 +286,7 @@
                                 <div class="col-span-12">
                                     <div class="border-2 border-dashed border-surface-300 dark:border-surface-700 rounded-border p-4 bg-surface-50 dark:bg-surface-900" style="min-height: 200px;">
                                         <div *ngIf="stock.imagePath" class="flex items-center justify-center h-full">
-                                            <img [src]="stock.imagePath" [alt]="stock.stockName" class="max-w-full max-h-48 object-contain" />
+                                            <img [src]="getImageUrl(stock.imagePath)" [alt]="stock.stockName" class="max-w-full max-h-48 object-contain" />
                                         </div>
                                         <div *ngIf="!stock.imagePath" class="flex items-center justify-center h-full text-muted-color">
                                             <div class="text-center">
@@ -956,7 +956,7 @@
                                 <input type="text" pInputText [(ngModel)]="row.stockCode" class="w-full" />
                             </td>
                             <td class="p-2">
-                                <p-select [(ngModel)]="row.unit" [options]="units()" optionLabel="description" optionValue="id" styleClass="w-full" />
+                                <p-select [(ngModel)]="row.unit" [options]="units()" optionLabel="description" optionValue="id" styleClass="w-full" appendTo="body" />
                             </td>
                             <td class="p-2">
                                 <p-inputnumber [(ngModel)]="row.factor" mode="decimal" [min]="0" [maxFractionDigits]="4" styleClass="w-full" />

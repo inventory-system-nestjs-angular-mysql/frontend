@@ -6,6 +6,7 @@ import {
   CreateSupplierModel,
   SupplierResponseModel,
 } from '../../core/models/supplier';
+import { CustomerInvoiceModel, EditableInvoiceModel } from '../../core/models/customer';
 
 @Injectable({ providedIn: 'root' })
 export class SupplierService extends BaseApiService {
@@ -31,6 +32,32 @@ export class SupplierService extends BaseApiService {
 
   deleteSupplier(id: string): Observable<void> {
     return this.delete<void>(id);
+  }
+
+  getSupplierInvoices(supplierId: string): Observable<CustomerInvoiceModel[]> {
+    return this.http.get<CustomerInvoiceModel[]>(
+      `${this.baseUrl}${API_ENDPOINTS.INVOICES_BY_SUPPLIER(supplierId)}`
+    );
+  }
+
+  createSupplierInvoices(supplierId: string, invoices: any[]): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}${API_ENDPOINTS.INVOICES}/supplier/${supplierId}/bulk`,
+      { invoices }
+    );
+  }
+
+  updateInvoice(invoiceId: string, invoice: any): Observable<any> {
+    return this.http.patch(
+      `${this.baseUrl}${API_ENDPOINTS.INVOICE_BY_ID(invoiceId)}`,
+      invoice
+    );
+  }
+
+  deleteInvoice(invoiceId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.baseUrl}${API_ENDPOINTS.INVOICE_BY_ID(invoiceId)}`
+    );
   }
 }
 

@@ -32,6 +32,7 @@ import { BrandResponseModel } from '../../core/models/brand';
 import { BrandService } from '../brand/brand.service';
 import { UnitResponseModel } from '../../core/models/unit';
 import { UnitService } from '../unit/unit.service';
+import { UploadService } from '../../core/services/upload.service';
 
 @Component({
     selector: 'app-stock',
@@ -96,7 +97,8 @@ export class StockComponent implements OnInit {
         private stockService: StockService,
         private stockGroupService: StockGroupService,
         private brandService: BrandService,
-        private unitService: UnitService
+        private unitService: UnitService,
+        private uploadService: UploadService
     ) {}
 
     ngOnInit() {
@@ -256,12 +258,31 @@ export class StockComponent implements OnInit {
     }
 
     onImageSelect(event: any) {
-        const file = event.files[0];
+        const file = event.target?.files?.[0] || event.files?.[0];
         if (file) {
-            // In a real application, you would upload the file to a server
-            // For now, we'll just store the file name
-            this.stock.imagePath = file.name;
+            // Upload the image
+            this.uploadService.uploadImage(file).subscribe({
+                next: (response) => {
+                    this.stock.imagePath = response.path;
+                    this.messageService.add({ 
+                        severity: 'success', 
+                        summary: 'Success', 
+                        detail: 'Image uploaded successfully' 
+                    });
+                },
+                error: (error) => {
+                    this.messageService.add({ 
+                        severity: 'error', 
+                        summary: 'Error', 
+                        detail: error.error?.message || 'Failed to upload image' 
+                    });
+                }
+            });
         }
+    }
+
+    getImageUrl(path: string | null | undefined): string {
+        return this.uploadService.getImageUrl(path);
     }
 
     getGroupName(groupId: string | null | undefined): string {

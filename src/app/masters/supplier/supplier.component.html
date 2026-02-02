@@ -107,6 +107,7 @@
                                 optionLabel="description"
                                 optionValue="id"
                                 placeholder="Select City"
+                                appendTo="body"
                                 fluid
                                 [showClear]="true"
                             />
@@ -139,13 +140,13 @@
                         <!-- Created Date -->
                         <div class="col-span-12 md:col-span-6">
                             <label for="createDate" class="block font-bold mb-2">Created</label>
-                            <p-datepicker [(ngModel)]="supplier.createDate" [showIcon]="true" dateFormat="dd-mm-yy" fluid />
+                            <p-datepicker [(ngModel)]="supplier.createDate" [showIcon]="true" dateFormat="dd-mm-yy" appendTo="body" fluid />
                         </div>
 
                         <!-- Last Date -->
                         <div class="col-span-12 md:col-span-6">
                             <label for="lastDate" class="block font-bold mb-2">Last</label>
-                            <p-datepicker [(ngModel)]="supplier.lastDate" [showIcon]="true" dateFormat="dd-mm-yy" fluid />
+                            <p-datepicker [(ngModel)]="supplier.lastDate" [showIcon]="true" dateFormat="dd-mm-yy" appendTo="body" fluid />
                         </div>
 
                         <!-- Frequency -->
@@ -182,7 +183,7 @@
                         <div class="col-span-12">
                             <div class="border-2 border-dashed border-surface-300 dark:border-surface-700 rounded-border p-4 bg-surface-50 dark:bg-surface-900" style="min-height: 200px;">
                                 <div *ngIf="supplier.imagePath" class="flex items-center justify-center h-full">
-                                    <img [src]="supplier.imagePath" [alt]="supplier.name" class="max-w-full max-h-48 object-contain" />
+                                    <img [src]="getImageUrl(supplier.imagePath)" [alt]="supplier.name" class="max-w-full max-h-48 object-contain" />
                                 </div>
                                 <div *ngIf="!supplier.imagePath" class="flex items-center justify-center h-full text-muted-color">
                                     <div class="text-center">
@@ -220,6 +221,129 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Supplier Invoices Table -->
+        <div class="col-span-12 mt-6">
+            <div class="card">
+                <div class="flex items-center justify-between mb-4">
+                    <h6 class="font-semibold text-lg">Supplier Invoices</h6>
+                    <p-button label="Add Invoice" icon="pi pi-plus" size="small" (onClick)="addInvoiceRow()" />
+                </div>
+                <p-table
+                    [value]="editableInvoices()"
+                    [tableStyle]="{ 'min-width': '50rem' }"
+                    [paginator]="true"
+                    [rows]="10"
+                    [rowsPerPageOptions]="[10, 20, 30]"
+                    styleClass="p-datatable-striped"
+                >
+                    <ng-template #header>
+                        <tr>
+                            <th style="min-width: 10rem">Invoice <span class="text-red-500">*</span></th>
+                            <th style="min-width: 10rem">Date <span class="text-red-500">*</span></th>
+                            <th style="min-width: 10rem">Warehouse <span class="text-red-500">*</span></th>
+                            <th style="min-width: 8rem">Curr. <span class="text-red-500">*</span></th>
+                            <th style="min-width: 12rem">Amount <span class="text-red-500">*</span></th>
+                            <th style="min-width: 15rem">Remark</th>
+                            <th style="min-width: 8rem">Actions</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template #body let-invoice let-rowIndex="rowIndex">
+                        <tr>
+                            <td>
+                                <input 
+                                    type="text" 
+                                    pInputText 
+                                    [(ngModel)]="invoice.invoice" 
+                                    class="w-full" 
+                                    placeholder="Invoice No." 
+                                    required
+                                    [class.ng-invalid]="submitted && !invoice.invoice?.trim()"
+                                />
+                                <small class="text-red-500 block" *ngIf="submitted && !invoice.invoice?.trim()">Invoice is required</small>
+                            </td>
+                            <td>
+                                <p-datepicker 
+                                    [(ngModel)]="invoice.date" 
+                                    [showIcon]="true" 
+                                    dateFormat="dd-mm-yy" 
+                                    appendTo="body"
+                                    fluid
+                                    required
+                                    [class.ng-invalid]="submitted && !invoice.date"
+                                />
+                                <small class="text-red-500 block" *ngIf="submitted && !invoice.date">Date is required</small>
+                            </td>
+                            <td>
+                                <p-select
+                                    [(ngModel)]="invoice.warehouse"
+                                    [options]="warehouses()"
+                                    optionLabel="description"
+                                    optionValue="id"
+                                    placeholder="Select Warehouse"
+                                    appendTo="body"
+                                    fluid
+                                    required
+                                    [class.ng-invalid]="submitted && !invoice.warehouse"
+                                />
+                                <small class="text-red-500 block" *ngIf="submitted && !invoice.warehouse">Warehouse is required</small>
+                            </td>
+                            <td>
+                                <p-select
+                                    [(ngModel)]="invoice.currency"
+                                    [options]="currencies()"
+                                    optionLabel="currency"
+                                    optionValue="id"
+                                    placeholder="Select Currency"
+                                    appendTo="body"
+                                    fluid
+                                    required
+                                    [class.ng-invalid]="submitted && !invoice.currency"
+                                />
+                                <small class="text-red-500 block" *ngIf="submitted && !invoice.currency">Currency is required</small>
+                            </td>
+                            <td>
+                                <p-inputnumber
+                                    [(ngModel)]="invoice.amount"
+                                    mode="decimal"
+                                    [min]="0"
+                                    [useGrouping]="true"
+                                    [maxFractionDigits]="2"
+                                    fluid
+                                    placeholder="Amount"
+                                    required
+                                    [class.ng-invalid]="submitted && (!invoice.amount || invoice.amount <= 0)"
+                                />
+                                <small class="text-red-500 block" *ngIf="submitted && (!invoice.amount || invoice.amount <= 0)">Amount must be greater than 0</small>
+                            </td>
+                            <td>
+                                <input type="text" pInputText [(ngModel)]="invoice.remark" class="w-full" placeholder="Remark" />
+                            </td>
+                            <td>
+                                <p-button
+                                    icon="pi pi-trash"
+                                    severity="danger"
+                                    [rounded]="true"
+                                    [outlined]="true"
+                                    size="small"
+                                    (onClick)="removeInvoiceRow(rowIndex)"
+                                />
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template #emptymessage>
+                        <tr>
+                            <td colspan="7" class="text-center py-8 text-muted-color">
+                                <div class="flex flex-col items-center gap-2">
+                                    <i class="pi pi-inbox text-4xl"></i>
+                                    <p>No invoices found. Click "Add Invoice" to add one.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
             </div>
         </div>
     </ng-template>
