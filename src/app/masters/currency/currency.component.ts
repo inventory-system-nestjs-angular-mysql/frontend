@@ -47,7 +47,6 @@ export class CurrencyComponent implements OnInit {
     selectedCurrencies: CurrencyResponseModel[] = [];
     submitted = false;
     cols = [
-        { field: 'serialNumber', header: 'Sr. No' },
         { field: 'currency', header: 'Currency' },
         { field: 'rate', header: 'Rate' },
         { field: 'taxRate', header: 'Tax Rate' }

@@ -15,7 +15,7 @@
     [rows]="10"
     [columns]="cols"
     [paginator]="true"
-    [globalFilterFields]="['description', 'serialNumber']"
+    [globalFilterFields]="['description']"
     [tableStyle]="{ 'min-width': '50rem' }"
     [(selection)]="selectedStockGroups"
     [rowHover]="true"
@@ -38,7 +38,6 @@
             <th style="width: 3rem">
                 <p-tableHeaderCheckbox />
             </th>
-            <th style="min-width: 10rem">Sr. No</th>
             <th style="min-width: 16rem">Description</th>
             <th style="min-width: 8rem"></th>
         </tr>
@@ -48,7 +47,6 @@
             <td style="width: 3rem">
                 <p-tableCheckbox [value]="sg" />
             </td>
-            <td>{{ sg.serialNumber || '-' }}</td>
             <td>{{ sg.description }}</td>
             <td>
                 <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true" (click)="editStockGroup(sg)" />

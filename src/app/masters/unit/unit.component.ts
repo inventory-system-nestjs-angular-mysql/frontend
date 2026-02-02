@@ -50,7 +50,6 @@ export class UnitComponent implements OnInit {
     submitted = false;
     cols = [
         { field: 'id', header: 'Id' },
-        { field: 'serialNumber', header: 'Serial Number' },
         { field: 'description', header: 'Description' }
     ];
     @ViewChild('dt') dt!: Table;

@@ -14,7 +14,7 @@
     [rows]="10"
     [columns]="cols"
     [paginator]="true"
-    [globalFilterFields]="['currency', 'serialNumber']"
+    [globalFilterFields]="['currency']"
     [tableStyle]="{ 'min-width': '50rem' }"
     [(selection)]="selectedCurrencies"
     [rowHover]="true"
@@ -37,7 +37,6 @@
             <th style="width: 3rem">
                 <p-tableHeaderCheckbox />
             </th>
-            <th style="min-width: 10rem">Sr. No</th>
             <th style="min-width: 12rem">Currency</th>
             <th style="min-width: 12rem">Rate</th>
             <th style="min-width: 12rem">Tax Rate</th>
@@ -49,7 +48,6 @@
             <td style="width: 3rem">
                 <p-tableCheckbox [value]="currency" />
             </td>
-            <td>{{ currency.serialNumber || '-' }}</td>
             <td>{{ currency.currency }}</td>
             <td>{{ formatNumber(currency.rate) }}</td>
             <td>{{ formatNumber(currency.taxRate) }}</td>
