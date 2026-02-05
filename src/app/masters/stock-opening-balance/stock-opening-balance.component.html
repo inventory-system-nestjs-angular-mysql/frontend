@@ -1,0 +1,241 @@
+<p-toast />
+
+<div class="card">
+  <h5 class="m-0 mb-4">IS Opening – Stock Opening Balance</h5>
+
+  <!-- Header: Invoice No, Date, Warehouse, Rem -->
+  <div class="grid grid-cols-12 gap-4 mb-4">
+    <div class="col-span-12 md:col-span-3">
+      <label for="refNo" class="block font-bold mb-2">Invoice No. <span class="text-red-500">*</span></label>
+      <input
+        type="text"
+        pInputText
+        id="refNo"
+        [(ngModel)]="refNo"
+        class="w-full"
+        placeholder="Invoice No."
+        [class.ng-invalid]="submitted && !refNo.trim()"
+      />
+      <small class="text-red-500 block" *ngIf="submitted && !refNo.trim()">Invoice No. is required</small>
+    </div>
+    <div class="col-span-12 md:col-span-3">
+      <label for="date" class="block font-bold mb-2">Date <span class="text-red-500">*</span></label>
+      <p-datepicker
+        [(ngModel)]="date"
+        [showIcon]="true"
+        dateFormat="dd-mm-yy"
+        appendTo="body"
+        fluid
+        id="date"
+        [class.ng-invalid]="submitted && !date"
+      />
+      <small class="text-red-500 block" *ngIf="submitted && !date">Date is required</small>
+    </div>
+    <div class="col-span-12 md:col-span-3">
+      <label for="warehouse" class="block font-bold mb-2">Warehouse <span class="text-red-500">*</span></label>
+      <p-select
+        [(ngModel)]="warehouseId"
+        [options]="warehouses()"
+        optionLabel="description"
+        optionValue="id"
+        placeholder="Select Warehouse"
+        appendTo="body"
+        fluid
+        id="warehouse"
+        [class.ng-invalid]="submitted && !warehouseId"
+      />
+      <small class="text-red-500 block" *ngIf="submitted && !warehouseId">Warehouse is required</small>
+    </div>
+    <div class="col-span-12 md:col-span-3">
+      <label for="remark" class="block font-bold mb-2">Rem</label>
+      <input
+        type="text"
+        pInputText
+        id="remark"
+        [(ngModel)]="remark"
+        class="w-full"
+        placeholder="Remarks"
+      />
+    </div>
+  </div>
+
+  <!-- Stock lines table -->
+  <div class="mb-4 flex gap-2">
+    <p-button label="Add Row" icon="pi pi-plus" severity="secondary" (onClick)="addEmptyRow()" />
+    <p-button label="Add from list (F2)" icon="pi pi-list" severity="secondary" outlined (onClick)="openStockLookupToAdd()" />
+  </div>
+
+  <p-table
+    [value]="lines()"
+    [tableStyle]="{ 'min-width': '60rem' }"
+    styleClass="p-datatable-gridlines p-datatable-sm"
+  >
+    <ng-template #header>
+      <tr>
+        <th style="min-width: 12rem">Stock Code</th>
+        <th style="min-width: 14rem">Stock Name</th>
+        <th style="min-width: 6rem">Prev Stock</th>
+        <th style="min-width: 6rem">Qty</th>
+        <th style="min-width: 8rem">Unit</th>
+        <th style="min-width: 10rem">Purchase Price</th>
+        <th style="min-width: 10rem">Amount</th>
+        <th style="width: 5rem"></th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-line let-rowIndex="rowIndex">
+      <tr>
+        <td>
+          <div class="flex align-items-center gap-1">
+            <input
+              type="text"
+              pInputText
+              [(ngModel)]="line.stockCode"
+              class="flex-1"
+              placeholder="Stock Code (type or pick from list)"
+              data-stock-code-input="true"
+              [attr.data-row-index]="rowIndex"
+            />
+            <p-button
+              icon="pi pi-list"
+              [rounded]="true"
+              [outlined]="true"
+              size="small"
+              pTooltip="Pick from stock list (F2)"
+              (onClick)="openStockLookupForRow(rowIndex)"
+            />
+          </div>
+        </td>
+        <td>{{ line.stockName || '-' }}</td>
+        <td>
+          <span>{{ line.prevStock ?? 0 }}</span>
+        </td>
+        <td>
+          <p-inputnumber
+            [(ngModel)]="line.qty"
+            mode="decimal"
+            [min]="0"
+            [useGrouping]="false"
+            fluid
+            (ngModelChange)="onQtyOrPriceChange(line)"
+          />
+        </td>
+        <td>
+          <p-select
+            [(ngModel)]="line.unit"
+            [options]="units()"
+            optionLabel="description"
+            optionValue="id"
+            placeholder="Unit"
+            [showClear]="true"
+            fluid
+            styleClass="w-full"
+            appendTo="body"
+          />
+        </td>
+        <td>
+          <p-inputnumber
+            [(ngModel)]="line.purchasePrice"
+            mode="decimal"
+            [min]="0"
+            [minFractionDigits]="2"
+            [maxFractionDigits]="4"
+            [useGrouping]="true"
+            fluid
+            (ngModelChange)="onQtyOrPriceChange(line)"
+          />
+        </td>
+        <td>
+          <span class="font-semibold">{{ line.amount | number:'1.2-2' }}</span>
+        </td>
+        <td>
+          <p-button
+            icon="pi pi-trash"
+            severity="danger"
+            [rounded]="true"
+            [outlined]="true"
+            size="small"
+            (onClick)="removeLine(rowIndex)"
+          />
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="8" class="text-center py-6 text-muted-color">
+          No stock lines. Click "Add Row" or "Add from list" to add items.
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <div class="flex justify-between items-center mt-4 pt-4 border-t border-surface-200 dark:border-surface-700">
+    <span class="text-muted-color text-sm">{{ lines().length }} item(s)</span>
+    <div class="flex items-center gap-4">
+      <span class="font-bold text-lg">Total: {{ totalAmount | number:'1.2-2' }}</span>
+      <p-button label="Save" icon="pi pi-check" (onClick)="save()" />
+    </div>
+  </div>
+</div>
+
+<!-- Stock lookup dialog (F2) -->
+<p-dialog
+  [(visible)]="stockLookupVisible"
+  header="Select Stock"
+  [style]="{ width: '90vw', maxWidth: '800px' }"
+  [modal]="true"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="true"
+  (onHide)="stockLookupTargetRowIndex = null"
+>
+  <div class="mb-4">
+    <p-iconfield>
+      <p-inputicon styleClass="pi pi-search" />
+      <input
+        pInputText
+        type="text"
+        [(ngModel)]="stockLookupSearch"
+        placeholder="Search by code or name..."
+        class="w-full"
+      />
+    </p-iconfield>
+  </div>
+  <p-table
+    #stockLookupTable
+    [value]="filteredStocksForLookup()"
+    [rows]="10"
+    [paginator]="true"
+    [rowsPerPageOptions]="[10, 20, 30]"
+    [tableStyle]="{ 'min-width': '40rem' }"
+    styleClass="p-datatable-sm p-datatable-striped"
+    dataKey="cSTKpk"
+    [rowHover]="true"
+  >
+    <ng-template #header>
+      <tr>
+        <th style="min-width: 16rem">Stock Name</th>
+        <th style="min-width: 8rem">Purchase Price</th>
+        <th style="width: 8rem">Select</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-stock>
+      <tr (dblclick)="onSelectStockFromLookup(stock)" style="cursor: pointer">
+        <td>{{ stock.stockName }}</td>
+        <td>{{ stock.purchasePrice | number:'1.2-2' }}</td>
+        <td>
+          <p-button
+            label="Select"
+            icon="pi pi-check"
+            size="small"
+            (onClick)="onSelectStockFromLookup(stock)"
+          />
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="3" class="text-center py-4 text-muted-color">No stocks found</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</p-dialog>

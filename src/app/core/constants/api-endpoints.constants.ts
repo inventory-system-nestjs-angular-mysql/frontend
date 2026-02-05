@@ -50,6 +50,7 @@ export const API_ENDPOINTS = {
   INVOICE_BY_ID: (id: string) => `/invoices/${id}`,
   INVOICES_BY_CUSTOMER: (customerId: string) => `/invoices/customer/${customerId}`,
   INVOICES_BY_SUPPLIER: (supplierId: string) => `/invoices/supplier/${supplierId}`,
+  INVOICES_OPENING_BALANCE: '/invoices/opening-balance',
 
   // Currency endpoints
   CURRENCIES: '/currencies',

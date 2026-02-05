@@ -84,6 +84,11 @@ export class AppMenu {
                         icon: 'pi pi-fw pi-box',
                         routerLink: ['/app/masters/salesman']
                     },
+                    {
+                        label: 'Stock Opening Balance',
+                        icon: 'pi pi-fw pi-list',
+                        routerLink: ['/app/masters/stock-opening-balance']
+                    },
                 ]
             },
         ];
