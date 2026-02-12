@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface UploadResponse {
@@ -24,7 +24,15 @@ export class UploadService {
     return this.http.post<UploadResponse>(`${this.baseUrl}/upload/image`, formData);
   }
 
-  getImageUrl(path: string | null | undefined): string {
+  /** Get image as base64 data URL from backend by image path (e.g. images/abc.jpg). Frontend can use the dataUrl as img src. */
+  getImageAsBase64(path: string | null | undefined): Observable<{ dataUrl: string }> {
+    if (!path?.trim()) return of({ dataUrl: '' });
+    if (path.startsWith('data:')) return of({ dataUrl: path });
+    const url = `${this.baseUrl}/upload/base64?path=${encodeURIComponent(path)}`;
+    return this.http.get<{ dataUrl: string }>(url);
+  }
+
+   getImageUrl(path: string | null | undefined): string {
     if (!path) return '';
     // If path already starts with http, return as is
     if (path.startsWith('http://') || path.startsWith('https://')) {

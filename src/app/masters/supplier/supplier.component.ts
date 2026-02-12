@@ -67,6 +67,8 @@ export class SupplierComponent implements OnInit {
     supplier: Partial<CreateSupplierModel & { id?: string }> = {};
     selectedSuppliers: SupplierResponseModel[] = [];
     submitted = false;
+    /** Base64 data URL for the current supplier image; loaded from backend by imagePath */
+    supplierImageDataUrl: string | null = null;
     supplierInvoices = signal<CustomerInvoiceModel[]>([]);
     editableInvoices = signal<EditableInvoiceModel[]>([]);
     cols = [
@@ -144,6 +146,7 @@ export class SupplierComponent implements OnInit {
             isSuspended: false,
             billToSame: true
         };
+        this.supplierImageDataUrl = null;
         this.supplierInvoices.set([]);
         this.editableInvoices.set([]);
         this.submitted = false;
@@ -182,6 +185,13 @@ export class SupplierComponent implements OnInit {
             email2: supplier.email2 ?? undefined,
             email3: supplier.email3 ?? undefined
         };
+        this.supplierImageDataUrl = null;
+        if (supplier.imagePath) {
+            this.uploadService.getImageAsBase64(supplier.imagePath).subscribe({
+                next: (r) => (this.supplierImageDataUrl = r.dataUrl || null),
+                error: () => (this.supplierImageDataUrl = null),
+            });
+        }
         this.supplierInvoices.set([]);
         this.editableInvoices.set([]);
         // Load invoices and bind after fetch
@@ -227,6 +237,7 @@ export class SupplierComponent implements OnInit {
     hideDialog() {
         this.supplierDialog = false;
         this.submitted = false;
+        this.supplierImageDataUrl = null;
         this.supplierInvoices.set([]);
         this.editableInvoices.set([]);
     }
@@ -306,29 +317,28 @@ export class SupplierComponent implements OnInit {
     onImageSelect(event: any) {
         const file = event.target?.files?.[0] || event.files?.[0];
         if (file) {
-            // Upload the image
             this.uploadService.uploadImage(file).subscribe({
                 next: (response) => {
                     this.supplier.imagePath = response.path;
-                    this.messageService.add({ 
-                        severity: 'success', 
-                        summary: 'Success', 
-                        detail: 'Image uploaded successfully' 
+                    this.uploadService.getImageAsBase64(response.path).subscribe({
+                        next: (r) => (this.supplierImageDataUrl = r.dataUrl || null),
+                        error: () => (this.supplierImageDataUrl = null),
+                    });
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Success',
+                        detail: 'Image uploaded successfully',
                     });
                 },
                 error: (error) => {
-                    this.messageService.add({ 
-                        severity: 'error', 
-                        summary: 'Error', 
-                        detail: error.error?.message || 'Failed to upload image' 
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: error.error?.message || 'Failed to upload image',
                     });
-                }
+                },
             });
         }
-    }
-
-    getImageUrl(path: string | null | undefined): string {
-        return this.uploadService.getImageUrl(path);
     }
 
     getCityName(cityId: string | null | undefined): string {
