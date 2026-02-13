@@ -60,7 +60,7 @@ import { UploadService } from '../../core/services/upload.service';
         TooltipModule
     ],
     templateUrl: './stock.component.html',
-    providers: [MessageService, ConfirmationService]
+    providers: [ConfirmationService]
 })
 export class StockComponent implements OnInit {
     stockDialog = false;
@@ -92,8 +92,8 @@ export class StockComponent implements OnInit {
     ];
 
     constructor(
-        private messageService: MessageService,
         private confirmationService: ConfirmationService,
+        private messageService: MessageService,
         private stockService: StockService,
         private stockGroupService: StockGroupService,
         private brandService: BrandService,

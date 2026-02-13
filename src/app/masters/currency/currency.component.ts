@@ -38,7 +38,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
         ConfirmDialogModule
     ],
     templateUrl: './currency.component.html',
-    providers: [MessageService, ConfirmationService]
+    providers: [ConfirmationService]
 })
 export class CurrencyComponent implements OnInit {
     currencyDialog = false;

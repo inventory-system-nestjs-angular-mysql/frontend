@@ -42,7 +42,7 @@ import { TooltipModule } from 'primeng/tooltip';
 
     ],
     templateUrl: './stockgroup.component.html',
-    providers: [MessageService, ConfirmationService]
+    providers: [ConfirmationService]
 })
 export class StockGroupComponent implements OnInit {
     stockGroupDialog = false;

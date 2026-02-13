@@ -1,13 +1,15 @@
 /**
  * Stock Opening Balance line item (UI + API)
+ * References stock detail (stock + unit); unit is auto-filled from stock detail.
  */
 export interface StockOpeningBalanceLineModel {
-  stockId: string;
+  stockDetailId: string;
   stockCode?: string | null;
   stockName?: string | null;
   prevStock?: number; // UI only - previous stock qty
   qty: number;
-  unit?: string | null;
+  unit?: string | null; // auto-filled from stock detail (unit id)
+  unitDescription?: string | null; // UI display only
   purchasePrice: number;
   amount: number;
 }
@@ -21,7 +23,7 @@ export interface CreateStockOpeningBalanceRequest {
   warehouseId: string;
   remark?: string | null;
   lines: {
-    stockId: string;
+    stockDetailId: string;
     stockCode?: string | null;
     stockName?: string | null;
     qty: number;

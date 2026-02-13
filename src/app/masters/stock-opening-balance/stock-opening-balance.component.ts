@@ -6,7 +6,7 @@ import { WarehouseService } from '../warehouse/warehouse.service';
 import { StockService } from '../stock/stock.service';
 import { UnitService } from '../unit/unit.service';
 import { WarehouseResponseModel } from '../../core/models/warehouse/warehouse-response.model';
-import { StockResponseModel } from '../../core/models/stock/stock-response.model';
+import { StockDetailLookupModel } from '../../core/models/stock/stock-detail-lookup.model';
 import { UnitResponseModel } from '../../core/models/unit/unit-response.model';
 import {
   StockOpeningBalanceLineModel,
@@ -54,7 +54,7 @@ export class StockOpeningBalanceComponent implements OnInit {
   remark = '';
   lines = signal<StockOpeningBalanceLineModel[]>([]);
   warehouses = signal<WarehouseResponseModel[]>([]);
-  stocks = signal<StockResponseModel[]>([]);
+  stockDetails = signal<StockDetailLookupModel[]>([]);
   units = signal<UnitResponseModel[]>([]);
   stockLookupVisible = false;
   stockLookupSearch = '';
@@ -72,7 +72,7 @@ export class StockOpeningBalanceComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadWarehouses();
-    this.loadStocks();
+    this.loadStockDetails();
     this.loadUnits();
   }
 
@@ -88,14 +88,14 @@ export class StockOpeningBalanceComponent implements OnInit {
     });
   }
 
-  loadStocks(): void {
-    this.stockService.getStocks().subscribe({
-      next: (data) => this.stocks.set(data),
+  loadStockDetails(): void {
+    this.stockService.getStockDetailsForLookup().subscribe({
+      next: (data) => this.stockDetails.set(data),
       error: () =>
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: 'Failed to load stocks',
+          detail: 'Failed to load stock details',
         }),
     });
   }
@@ -120,7 +120,7 @@ export class StockOpeningBalanceComponent implements OnInit {
     this.lines.set([
       ...this.lines(),
       {
-        stockId: '',
+        stockDetailId: '',
         stockCode: '',
         stockName: '',
         prevStock: 0,
@@ -132,18 +132,19 @@ export class StockOpeningBalanceComponent implements OnInit {
     ]);
   }
 
-  addRowFromStock(stock: StockResponseModel): void {
-    const price = stock.purchasePrice ?? 0;
+  addRowFromStockDetail(detail: StockDetailLookupModel): void {
+    const price = detail.purchase ?? 0;
     const qty = 1;
     this.lines.set([
       ...this.lines(),
       {
-        stockId: stock.cSTKpk,
-        stockCode: '', // leave for user to type
-        stockName: stock.stockName ?? '',
+        stockDetailId: detail.id,
+        stockCode: detail.stockCode ?? '',
+        stockName: detail.stockName ?? '',
         prevStock: 0,
         qty,
-        unit: '',
+        unit: detail.unit ?? '',
+        unitDescription: detail.unitDescription ?? null,
         purchasePrice: price,
         amount: qty * price,
       },
@@ -164,23 +165,25 @@ export class StockOpeningBalanceComponent implements OnInit {
     this.stockLookupVisible = true;
   }
 
-  onSelectStockFromLookup(stock: StockResponseModel): void {
+  onSelectStockDetailFromLookup(detail: StockDetailLookupModel): void {
     if (this.stockLookupTargetRowIndex !== null) {
       const idx = this.stockLookupTargetRowIndex;
       const list = [...this.lines()];
-      const price = stock.purchasePrice ?? 0;
+      const price = detail.purchase ?? 0;
       const qty = list[idx]?.qty || 1;
       list[idx] = {
         ...list[idx],
-        stockId: stock.cSTKpk,
-        // keep existing stockCode so user can type or edit it (pk is hidden)
-        stockName: stock.stockName ?? '',
+        stockDetailId: detail.id,
+        stockCode: detail.stockCode ?? '',
+        stockName: detail.stockName ?? '',
+        unit: detail.unit ?? '',
+        unitDescription: detail.unitDescription ?? null,
         purchasePrice: price,
         amount: qty * price,
       };
       this.lines.set(list);
     } else {
-      this.addRowFromStock(stock);
+      this.addRowFromStockDetail(detail);
     }
     this.stockLookupVisible = false;
     this.stockLookupTargetRowIndex = null;
@@ -234,7 +237,7 @@ export class StockOpeningBalanceComponent implements OnInit {
       return;
     }
     const validLines = this.lines().filter(
-      (r) => r.stockId?.trim() && r.qty > 0 && r.amount >= 0
+      (r) => r.stockDetailId?.trim() && r.qty > 0 && r.amount >= 0
     );
     if (validLines.length === 0) {
       this.messageService.add({
@@ -261,7 +264,7 @@ export class StockOpeningBalanceComponent implements OnInit {
       warehouseId: this.warehouseId.trim(),
       remark: this.remark?.trim() || null,
       lines: validLines.map((r) => ({
-        stockId: r.stockId,
+        stockDetailId: r.stockDetailId,
         stockCode: r.stockCode ?? null,
         stockName: r.stockName ?? null,
         qty: r.qty,
@@ -303,14 +306,20 @@ export class StockOpeningBalanceComponent implements OnInit {
     return this.warehouses().find((w) => w.id === id)?.description ?? '';
   }
 
-  filteredStocksForLookup(): StockResponseModel[] {
+  getUnitDescription(id: string | null | undefined): string {
+    if (!id) return '';
+    return this.units().find((u) => u.id === id)?.description ?? id;
+  }
+
+  filteredStockDetailsForLookup(): StockDetailLookupModel[] {
     const search = (this.stockLookupSearch || '').toLowerCase();
-    let list = this.stocks();
+    let list = this.stockDetails();
     if (search.trim()) {
       list = list.filter(
-        (s) =>
-          (s.cSTKpk?.toLowerCase().includes(search) ||
-            s.stockName?.toLowerCase().includes(search))
+        (d) =>
+          (d.stockCode?.toLowerCase().includes(search) ||
+            d.stockName?.toLowerCase().includes(search) ||
+            d.unitDescription?.toLowerCase().includes(search))
       );
     }
     return list;

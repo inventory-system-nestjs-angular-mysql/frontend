@@ -87,7 +87,17 @@
                         <!-- Code -->
                         <div class="col-span-12 md:col-span-6">
                             <label for="code" class="block font-bold mb-2">Code <span class="text-red-500">*</span></label>
-                            <input type="text" pInputText id="code" [(ngModel)]="supplier.code" required autofocus fluid class="w-full" />
+                            <input
+                                type="text"
+                                pInputText
+                                id="code"
+                                [(ngModel)]="supplier.code"
+                                (ngModelChange)="supplier.code = ($event || '').toUpperCase()"
+                                required
+                                autofocus
+                                fluid
+                                class="w-full"
+                            />
                             <small class="text-red-500" *ngIf="submitted && !supplier.code">Code is required.</small>
                         </div>
 
@@ -109,8 +119,9 @@
                                 placeholder="Select City"
                                 appendTo="body"
                                 fluid
-                                [showClear]="true"
+                                [showClear]="true" required
                             />
+                            <small class="text-red-500" *ngIf="submitted && !supplier.cityId">City is required.</small>
                         </div>
 
                         <!-- TIN (NPWP) -->

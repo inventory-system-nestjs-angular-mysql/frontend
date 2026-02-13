@@ -8,6 +8,7 @@ export const API_ENDPOINTS = {
   STOCK_BY_ID: (id: string) => `/stocks/${id}`,
   STOCK_DETAILS: (stockId: string) => `/stocks/${stockId}/details`,
   STOCK_DETAIL_BY_ID: (id: string) => `/stocks/details/${id}`,
+  STOCK_DETAILS_LOOKUP: '/stocks/all-details',
 
   // Stock Group endpoints
   STOCK_GROUPS: '/stockgroups',

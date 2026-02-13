@@ -38,7 +38,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
         ConfirmDialogModule
     ],
     templateUrl: './city.component.html',
-    providers: [MessageService, ConfirmationService]
+    providers: [ConfirmationService]
 })
 export class CityComponent implements OnInit {
     cityDialog = false;

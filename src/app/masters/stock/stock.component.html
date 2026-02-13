@@ -953,7 +953,13 @@
                     <tbody>
                         <tr *ngFor="let row of stock.priceRows; let i = index" class="border-b border-surface-100 dark:border-surface-800">
                             <td class="p-2">
-                                <input type="text" pInputText [(ngModel)]="row.stockCode" class="w-full" />
+                                <input
+                                    type="text"
+                                    pInputText
+                                    [(ngModel)]="row.stockCode"
+                                    (ngModelChange)="row.stockCode = ($event || '').toUpperCase()"
+                                    class="w-32"
+                                />
                             </td>
                             <td class="p-2">
                                 <p-select [(ngModel)]="row.unit" [options]="units()" optionLabel="description" optionValue="id" styleClass="w-full" appendTo="body" />

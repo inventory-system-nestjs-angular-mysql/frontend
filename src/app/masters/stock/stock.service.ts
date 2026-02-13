@@ -7,6 +7,7 @@ import {
   StockResponseModel,
   CreateStockDetailModel,
   StockDetailResponseModel,
+  StockDetailLookupModel,
 } from '../../core/models/stock';
 
 @Injectable({ providedIn: 'root' })
@@ -17,6 +18,10 @@ export class StockService extends BaseApiService {
 
   getStocks(): Observable<StockResponseModel[]> {
     return this.get<StockResponseModel[]>();
+  }
+
+  getStockDetailsForLookup(): Observable<StockDetailLookupModel[]> {
+    return this.get<StockDetailLookupModel[]>('all-details');
   }
 
   getStock(id: string): Observable<StockResponseModel> {
