@@ -85,24 +85,24 @@
                         <!-- Name -->
                         <div class="col-span-12">
                             <label for="name" class="block font-bold mb-2">Salesman <span class="text-red-500">*</span></label>
-                            <input type="text" pInputText id="name" [(ngModel)]="salesman.name" required autofocus fluid class="w-full" />
+                            <input type="text" pInputText id="name" [(ngModel)]="salesman.name" (blur)="salesman.name = salesman.name?.trim()" required autofocus fluid class="w-full" />
                             <small class="text-red-500" *ngIf="submitted && !salesman.name">Name is required.</small>
                         </div>
 
                         <!-- Address 1 -->
                         <div class="col-span-12">
                             <label for="address1" class="block font-bold mb-2">Address</label>
-                            <input type="text" pInputText id="address1" [(ngModel)]="salesman.address1" fluid />
+                            <input type="text" pInputText id="address1" [(ngModel)]="salesman.address1" (blur)="salesman.address1 = salesman.address1?.trim()" fluid />
                         </div>
 
                         <!-- Address 2 -->
                         <div class="col-span-12">
-                            <input type="text" pInputText id="address2" [(ngModel)]="salesman.address2" fluid />
+                            <input type="text" pInputText id="address2" [(ngModel)]="salesman.address2" (blur)="salesman.address2 = salesman.address2?.trim()" fluid />
                         </div>
 
                         <!-- Address 3 -->
                         <div class="col-span-12">
-                            <input type="text" pInputText id="address3" [(ngModel)]="salesman.address3" fluid />
+                            <input type="text" pInputText id="address3" [(ngModel)]="salesman.address3" (blur)="salesman.address3 = salesman.address3?.trim()" fluid />
                         </div>
 
                         <!-- Last Transaction -->
@@ -130,7 +130,7 @@
                         <!-- Memo -->
                         <div class="col-span-12">
                             <label for="memo" class="block font-bold mb-2">Memo</label>
-                            <textarea id="memo" pTextarea [(ngModel)]="salesman.memo" rows="4" cols="30" fluid placeholder="Enter memo..."></textarea>
+                            <textarea id="memo" pTextarea [(ngModel)]="salesman.memo" (blur)="salesman.memo = salesman.memo?.trim()" rows="4" cols="30" fluid placeholder="Enter memo..."></textarea>
                         </div>
 
                         <!-- Suspended Checkbox -->

@@ -12,6 +12,7 @@
         pInputText
         id="refNo"
         [(ngModel)]="refNo"
+        (blur)="refNo = refNo.trim()"
         class="w-full"
         placeholder="Invoice No."
         [class.ng-invalid]="submitted && !refNo.trim()"
@@ -53,6 +54,7 @@
         pInputText
         id="remark"
         [(ngModel)]="remark"
+        (blur)="remark = remark.trim()"
         class="w-full"
         placeholder="Remarks"
       />
@@ -62,7 +64,7 @@
   <!-- Stock lines table -->
   <div class="mb-4 flex gap-2">
     <p-button label="Add Row" icon="pi pi-plus" severity="secondary" (onClick)="addEmptyRow()" />
-    <p-button label="Add from list (F2)" icon="pi pi-list" severity="secondary" outlined (onClick)="openStockLookupToAdd()" pTooltip="Select stock Code" />
+    <p-button label="Add from list" icon="pi pi-list" severity="secondary" outlined (onClick)="openStockLookupToAdd()" pTooltip="Select stock Code" />
   </div>
 
   <p-table

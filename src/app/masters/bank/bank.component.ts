@@ -135,7 +135,7 @@ export class BankComponent implements OnInit {
         this.submitted = true;
         if (this.bank.description?.trim()) {
             if (this.bank.id) {
-                const updateDto = { 
+                const updateDto = {
                     description: this.bank.description
                 };
                 this.bankService.updateBank(this.bank.id, updateDto).subscribe({
@@ -148,7 +148,7 @@ export class BankComponent implements OnInit {
                     error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to update Bank' })
                 });
             } else {
-                const createDto = { 
+                const createDto = {
                     description: this.bank.description,
                 };
                 this.bankService.createBank(createDto).subscribe({

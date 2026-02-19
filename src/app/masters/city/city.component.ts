@@ -135,7 +135,7 @@ export class CityComponent implements OnInit {
         this.submitted = true;
         if (this.city.description?.trim()) {
             if (this.city.id) {
-                const updateDto = { 
+                const updateDto = {
                     description: this.city.description
                 };
                 this.cityService.updateCity(this.city.id, updateDto).subscribe({
@@ -148,7 +148,7 @@ export class CityComponent implements OnInit {
                     error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to update City' })
                 });
             } else {
-                const createDto = { 
+                const createDto = {
                     description: this.city.description,
                 };
                 this.cityService.createCity(createDto).subscribe({

@@ -61,12 +61,12 @@
         <div class="flex flex-col gap-6">
             <div>
                 <label for="description" class="block font-bold mb-3">Description</label>
-                <input type="text" pInputText id="description" [(ngModel)]="unit.description" required autofocus fluid />
+                <input type="text" pInputText id="description" [(ngModel)]="unit.description" (blur)="unit.description = unit.description?.trim()" required autofocus fluid />
                 <small class="text-red-500" *ngIf="submitted && !unit.description">Description is required.</small>
             </div>
             <div>
                 <label for="coreTax" class="block font-bold mb-3">Core Tax</label>
-                <input type="text" pInputText id="coreTax" [(ngModel)]="unit.coreTax" maxlength="7" fluid />
+                <input type="text" pInputText id="coreTax" [(ngModel)]="unit.coreTax" (blur)="unit.coreTax = unit.coreTax?.trim()" maxlength="7" fluid />
             </div>
         </div>
     </ng-template>

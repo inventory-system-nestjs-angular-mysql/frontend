@@ -93,6 +93,7 @@
                                 id="code"
                                 [(ngModel)]="supplier.code"
                                 (ngModelChange)="supplier.code = ($event || '').toUpperCase()"
+                                (blur)="supplier.code = supplier.code?.trim()"
                                 required
                                 autofocus
                                 fluid
@@ -104,7 +105,7 @@
                         <!-- Name -->
                         <div class="col-span-12 md:col-span-6">
                             <label for="name" class="block font-bold mb-2">Name <span class="text-red-500">*</span></label>
-                            <input type="text" pInputText id="name" [(ngModel)]="supplier.name" required fluid class="w-full" />
+                            <input type="text" pInputText id="name" [(ngModel)]="supplier.name" (blur)="supplier.name = supplier.name?.trim()" required fluid class="w-full" />
                             <small class="text-red-500" *ngIf="submitted && !supplier.name">Name is required.</small>
                         </div>
 
@@ -127,13 +128,13 @@
                         <!-- TIN (NPWP) -->
                         <div class="col-span-12 md:col-span-6">
                             <label for="npwp" class="block font-bold mb-2">TIN</label>
-                            <input type="text" pInputText id="npwp" [(ngModel)]="supplier.npwp" fluid />
+                            <input type="text" pInputText id="npwp" [(ngModel)]="supplier.npwp" (blur)="supplier.npwp = supplier.npwp?.trim()" fluid />
                         </div>
 
                         <!-- Address -->
                         <div class="col-span-12">
                             <label for="address" class="block font-bold mb-2">Address</label>
-                            <textarea id="address" pTextarea [(ngModel)]="supplier.address1" rows="3" cols="30" fluid placeholder="Enter address..."></textarea>
+                            <textarea id="address" pTextarea [(ngModel)]="supplier.address1" (blur)="supplier.address1 = supplier.address1?.trim()" rows="3" cols="30" fluid placeholder="Enter address..."></textarea>
                         </div>
 
                         <!-- Discount -->
@@ -208,19 +209,19 @@
                         <!-- Email -->
                         <div class="col-span-12">
                             <label for="email" class="block font-bold mb-2">Email</label>
-                            <input type="email" pInputText id="email" [(ngModel)]="supplier.email" fluid />
+                            <input type="email" pInputText id="email" [(ngModel)]="supplier.email" (blur)="supplier.email = supplier.email?.trim()" fluid />
                         </div>
 
                         <!-- Email 2 -->
                         <div class="col-span-12">
                             <label for="email2" class="block font-bold mb-2">Email 2</label>
-                            <input type="email" pInputText id="email2" [(ngModel)]="supplier.email2" fluid />
+                            <input type="email" pInputText id="email2" [(ngModel)]="supplier.email2" (blur)="supplier.email2 = supplier.email2?.trim()" fluid />
                         </div>
 
                         <!-- Memo -->
                         <div class="col-span-12">
                             <label for="memo" class="block font-bold mb-2">Memo</label>
-                            <textarea id="memo" pTextarea [(ngModel)]="supplier.memo" rows="4" cols="30" fluid placeholder="Enter memo..."></textarea>
+                            <textarea id="memo" pTextarea [(ngModel)]="supplier.memo" (blur)="supplier.memo = supplier.memo?.trim()" rows="4" cols="30" fluid placeholder="Enter memo..."></textarea>
                         </div>
 
                         <!-- Suspended Checkbox -->
@@ -264,12 +265,13 @@
                     <ng-template #body let-invoice let-rowIndex="rowIndex">
                         <tr>
                             <td>
-                                <input 
-                                    type="text" 
-                                    pInputText 
-                                    [(ngModel)]="invoice.invoice" 
-                                    class="w-full" 
-                                    placeholder="Invoice No." 
+                                <input
+                                    type="text"
+                                    pInputText
+                                    [(ngModel)]="invoice.invoice"
+                                    (blur)="invoice.invoice = invoice.invoice?.trim()"
+                                    class="w-full"
+                                    placeholder="Invoice No."
                                     required
                                     [class.ng-invalid]="submitted && !invoice.invoice?.trim()"
                                 />
@@ -330,7 +332,7 @@
                                 <small class="text-red-500 block" *ngIf="submitted && (!invoice.amount || invoice.amount <= 0)">Amount must be greater than 0</small>
                             </td>
                             <td>
-                                <input type="text" pInputText [(ngModel)]="invoice.remark" class="w-full" placeholder="Remark" />
+                                <input type="text" pInputText [(ngModel)]="invoice.remark" (blur)="invoice.remark = invoice.remark?.trim()" class="w-full" placeholder="Remark" />
                             </td>
                             <td>
                                 <p-button

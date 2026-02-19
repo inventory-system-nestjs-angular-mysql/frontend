@@ -64,7 +64,7 @@
         <div class="flex flex-col gap-6">
             <div>
                 <label for="currency" class="block font-bold mb-3">Currency <span class="text-red-500">*</span></label>
-                <input type="text" pInputText id="currency" [(ngModel)]="currency.currency" required autofocus fluid maxlength="10" />
+                <input type="text" pInputText id="currency" [(ngModel)]="currency.currency" (blur)="currency.currency = currency.currency?.trim()" required autofocus fluid maxlength="10" />
                 <small class="text-red-500" *ngIf="submitted && !currency.currency">Currency is required.</small>
             </div>
             <div>
@@ -78,7 +78,7 @@
             </div>
             <div>
                 <label for="serialNumber" class="block font-bold mb-3">Serial Number</label>
-                <input type="text" pInputText id="serialNumber" [(ngModel)]="currency.serialNumber" fluid maxlength="10" />
+                <input type="text" pInputText id="serialNumber" [(ngModel)]="currency.serialNumber" (blur)="currency.serialNumber = currency.serialNumber?.trim()" fluid maxlength="10" />
             </div>
         </div>
     </ng-template>

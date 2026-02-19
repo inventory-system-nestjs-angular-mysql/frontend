@@ -139,7 +139,7 @@ export class UnitComponent implements OnInit {
         this.submitted = true;
         if (this.unit.description?.trim()) {
             if (this.unit.id) {
-                const updateDto = { 
+                const updateDto = {
                     description: this.unit.description,
                     coreTax: this.unit.coreTax
                 };
@@ -153,7 +153,7 @@ export class UnitComponent implements OnInit {
                     error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to update Unit' })
                 });
             } else {
-                const createDto = { 
+                const createDto = {
                     description: this.unit.description,
                     coreTax: this.unit.coreTax
                 };

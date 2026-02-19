@@ -93,6 +93,7 @@
                                 id="code"
                                 [(ngModel)]="customer.code"
                                 (ngModelChange)="customer.code = ($event || '').toUpperCase()"
+                                (blur)="customer.code = customer.code?.trim()"
                                 required
                                 autofocus
                                 fluid
@@ -104,7 +105,7 @@
                         <!-- Name -->
                         <div class="col-span-12 md:col-span-6">
                             <label for="name" class="block font-bold mb-2">Name <span class="text-red-500">*</span></label>
-                            <input type="text" pInputText id="name" [(ngModel)]="customer.name" required fluid class="w-full" />
+                            <input type="text" pInputText id="name" [(ngModel)]="customer.name" (blur)="customer.name = customer.name?.trim()" required fluid class="w-full" />
                             <small class="text-red-500" *ngIf="submitted && !customer.name">Name is required.</small>
                         </div>
 
@@ -127,25 +128,25 @@
                         <!-- Email -->
                         <div class="col-span-12 md:col-span-6">
                             <label for="email" class="block font-bold mb-2">Email</label>
-                            <input type="email" pInputText id="email" [(ngModel)]="customer.email" fluid />
+                            <input type="email" pInputText id="email" [(ngModel)]="customer.email" (blur)="customer.email = customer.email?.trim()" fluid />
                         </div>
 
                         <!-- Address -->
                         <div class="col-span-12">
                             <label for="address" class="block font-bold mb-2">Address</label>
-                            <textarea id="address" pTextarea [(ngModel)]="customer.address1" rows="3" cols="30" fluid placeholder="Enter address..."></textarea>
+                            <textarea id="address" pTextarea [(ngModel)]="customer.address1" (blur)="customer.address1 = customer.address1?.trim()" rows="3" cols="30" fluid placeholder="Enter address..."></textarea>
                         </div>
 
                         <!-- Zip -->
                         <div class="col-span-12 md:col-span-6">
                             <label for="zip" class="block font-bold mb-2">Zip</label>
-                            <input type="text" pInputText id="zip" [(ngModel)]="customer.zip" fluid />
+                            <input type="text" pInputText id="zip" [(ngModel)]="customer.zip" (blur)="customer.zip = customer.zip?.trim()" fluid />
                         </div>
 
                         <!-- Telephone -->
                         <div class="col-span-12 md:col-span-6">
                             <label for="telephone" class="block font-bold mb-2">Telp</label>
-                            <input type="text" pInputText id="telephone" [(ngModel)]="customer.telephone" fluid />
+                            <input type="text" pInputText id="telephone" [(ngModel)]="customer.telephone" (blur)="customer.telephone = customer.telephone?.trim()" fluid />
                         </div>
 
                         <!-- Birthday -->
@@ -191,19 +192,19 @@
                         <!-- NIK -->
                         <div class="col-span-12">
                             <label for="nik" class="block font-bold mb-2">NIK</label>
-                            <input type="text" pInputText id="nik" [(ngModel)]="customer.nik" fluid />
+                            <input type="text" pInputText id="nik" [(ngModel)]="customer.nik" (blur)="customer.nik = customer.nik?.trim()" fluid />
                         </div>
 
                         <!-- TIN (NPWP) -->
                         <div class="col-span-12 md:col-span-6">
                             <label for="npwp" class="block font-bold mb-2">TIN</label>
-                            <input type="text" pInputText id="npwp" [(ngModel)]="customer.npwp" fluid />
+                            <input type="text" pInputText id="npwp" [(ngModel)]="customer.npwp" (blur)="customer.npwp = customer.npwp?.trim()" fluid />
                         </div>
 
                         <!-- Legacy TIN (NPPKP) -->
                         <div class="col-span-12 md:col-span-6">
                             <label for="nppkp" class="block font-bold mb-2">Legacy TIN</label>
-                            <input type="text" pInputText id="nppkp" [(ngModel)]="customer.nppkp" fluid />
+                            <input type="text" pInputText id="nppkp" [(ngModel)]="customer.nppkp" (blur)="customer.nppkp = customer.nppkp?.trim()" fluid />
                         </div>
 
                         <!-- Due Date (Term) -->
@@ -304,7 +305,7 @@
                         <!-- Memo -->
                         <div class="col-span-12">
                             <label for="memo" class="block font-bold mb-2">Memo</label>
-                            <textarea id="memo" pTextarea [(ngModel)]="customer.memo" rows="4" cols="30" fluid placeholder="Enter memo..."></textarea>
+                            <textarea id="memo" pTextarea [(ngModel)]="customer.memo" (blur)="customer.memo = customer.memo?.trim()" rows="4" cols="30" fluid placeholder="Enter memo..."></textarea>
                         </div>
 
                         <!-- Suspended Checkbox -->
@@ -352,6 +353,7 @@
                                     type="text"
                                     pInputText
                                     [(ngModel)]="invoice.invoice"
+                                    (blur)="invoice.invoice = invoice.invoice?.trim()"
                                     class="w-full"
                                     placeholder="Invoice No."
                                     required
@@ -414,7 +416,7 @@
                                 <small class="text-red-500 block" *ngIf="submitted && (!invoice.amount || invoice.amount <= 0)">Amount must be greater than 0</small>
                             </td>
                             <td>
-                                <input type="text" pInputText [(ngModel)]="invoice.remark" class="w-full" placeholder="Remark" />
+                                <input type="text" pInputText [(ngModel)]="invoice.remark" (blur)="invoice.remark = invoice.remark?.trim()" class="w-full" placeholder="Remark" />
                             </td>
                             <td>
                                 <p-button

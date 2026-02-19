@@ -99,7 +99,7 @@
                                 <!-- Stock Name -->
                                 <div class="col-span-12">
                                     <label for="stockName" class="block font-bold mb-2">Stock Name <span class="text-red-500">*</span></label>
-                                    <input type="text" pInputText id="stockName" [(ngModel)]="stock.stockName" required autofocus fluid class="w-full" />
+                                    <input type="text" pInputText id="stockName" [(ngModel)]="stock.stockName" (blur)="stock.stockName = stock.stockName?.trim()" required autofocus fluid class="w-full" />
                                     <small class="text-red-500" *ngIf="submitted && !stock.stockName">Stock Name is required.</small>
                                 </div>
 
@@ -260,14 +260,14 @@
                                 <!-- Part No.1 -->
                                 <div class="col-span-12 md:col-span-6">
                                     <label for="partNo1" class="block font-bold mb-2">Part No.1</label>
-                                    <input type="text" pInputText id="partNo1" [(ngModel)]="stock.partNo1" fluid />
+                                    <input type="text" pInputText id="partNo1" [(ngModel)]="stock.partNo1" (blur)="stock.partNo1 = stock.partNo1?.trim()" fluid />
                                 </div>
 
                                 <!-- Part No.2 -->
                                 <div class="col-span-12 md:col-span-6">
                                     <label for="partNo2" class="block font-bold mb-2">Part No.2</label>
                                     <div class="flex gap-2">
-                                        <input type="text" pInputText id="partNo2" [(ngModel)]="stock.partNo2" fluid class="flex-1" />
+                                        <input type="text" pInputText id="partNo2" [(ngModel)]="stock.partNo2" (blur)="stock.partNo2 = stock.partNo2?.trim()" fluid class="flex-1" />
                                         <p-button icon="pi pi-external-link" [rounded]="true" [text]="true" severity="danger" pTooltip="Link video" />
                                     </div>
                                 </div>
@@ -298,7 +298,7 @@
                                 </div>
                                 <div class="col-span-12">
                                     <label for="memo" class="block font-bold mb-2">Memo</label>
-                                    <textarea id="memo" pTextarea [(ngModel)]="stock.memo" rows="4" cols="30" fluid placeholder="Enter memo..."></textarea>
+                                    <textarea id="memo" pTextarea [(ngModel)]="stock.memo" (blur)="stock.memo = stock.memo?.trim()" rows="4" cols="30" fluid placeholder="Enter memo..."></textarea>
                                 </div>
                                 <div class="col-span-12">
                                     <div class="flex flex-col gap-2">
@@ -958,6 +958,7 @@
                                     pInputText
                                     [(ngModel)]="row.stockCode"
                                     (ngModelChange)="row.stockCode = ($event || '').toUpperCase()"
+                                    (blur)="row.stockCode = row.stockCode?.trim()"
                                     class="w-32"
                                 />
                             </td>

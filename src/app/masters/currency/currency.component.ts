@@ -142,7 +142,7 @@ export class CurrencyComponent implements OnInit {
         this.submitted = true;
         if (this.currency.currency?.trim() && this.currency.rate !== undefined) {
             if (this.currency.id) {
-                const updateDto = { 
+                const updateDto = {
                     currency: this.currency.currency,
                     rate: this.currency.rate,
                     taxRate: this.currency.taxRate ?? 0,
@@ -158,7 +158,7 @@ export class CurrencyComponent implements OnInit {
                     error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to update Currency' })
                 });
             } else {
-                const createDto: CreateCurrencyModel = { 
+                const createDto: CreateCurrencyModel = {
                     currency: this.currency.currency!,
                     rate: this.currency.rate!,
                     taxRate: this.currency.taxRate ?? 0,

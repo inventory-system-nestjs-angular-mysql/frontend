@@ -135,7 +135,7 @@ export class BrandComponent implements OnInit {
         this.submitted = true;
         if (this.brand.description?.trim()) {
             if (this.brand.id) {
-                const updateDto = { 
+                const updateDto = {
                     description: this.brand.description
                 };
                 this.brandService.updateBrand(this.brand.id, updateDto).subscribe({
@@ -148,7 +148,7 @@ export class BrandComponent implements OnInit {
                     error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to update Brand' })
                 });
             } else {
-                const createDto = { 
+                const createDto = {
                     description: this.brand.description,
                 };
                 this.brandService.createBrand(createDto).subscribe({

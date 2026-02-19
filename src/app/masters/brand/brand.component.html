@@ -61,7 +61,7 @@
         <div class="flex flex-col gap-6">
             <div>
                 <label for="description" class="block font-bold mb-3">Description</label>
-                <input type="text" pInputText id="description" [(ngModel)]="brand.description" required autofocus fluid />
+                <input type="text" pInputText id="description" [(ngModel)]="brand.description" (blur)="brand.description = brand.description?.trim()" required autofocus fluid />
                 <small class="text-red-500" *ngIf="submitted && !brand.description">Description is required.</small>
             </div>
         </div>

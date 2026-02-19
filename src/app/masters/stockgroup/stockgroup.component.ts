@@ -141,7 +141,7 @@ export class StockGroupComponent implements OnInit {
         this.submitted = true;
         if (this.stockGroup.description?.trim()) {
             if (this.stockGroup.id) {
-                const updateDto = { 
+                const updateDto = {
                     description: this.stockGroup.description
                 };
                 this.stockGroupService.updateStockGroup(this.stockGroup.id, updateDto).subscribe({
@@ -154,7 +154,7 @@ export class StockGroupComponent implements OnInit {
                     error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to update Stock Group' })
                 });
             } else {
-                const createDto = { 
+                const createDto = {
                     description: this.stockGroup.description,
                 };
                 this.stockGroupService.createStockGroup(createDto).subscribe({

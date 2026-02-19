@@ -135,7 +135,7 @@ export class WarehouseComponent implements OnInit {
         this.submitted = true;
         if (this.warehouse.description?.trim()) {
             if (this.warehouse.id) {
-                const updateDto = { 
+                const updateDto = {
                     description: this.warehouse.description
                 };
                 this.warehouseService.updateWarehouse(this.warehouse.id, updateDto).subscribe({
@@ -148,7 +148,7 @@ export class WarehouseComponent implements OnInit {
                     error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to update Warehouse' })
                 });
             } else {
-                const createDto = { 
+                const createDto = {
                     description: this.warehouse.description,
                 };
                 this.warehouseService.createWarehouse(createDto).subscribe({
