@@ -1,7 +1,31 @@
 <p-toast />
 
 <div class="card">
-  <h5 class="m-0 mb-4">IS Opening – Stock Opening Balance</h5>
+  <div class="flex items-center justify-between mb-4">
+    <h5 class="m-0">IS Opening – Stock Opening Balance</h5>
+    <div class="flex items-center gap-2">
+      <span *ngIf="currentRecordId" class="text-sm text-orange-500 font-semibold">
+        <i class="pi pi-pencil mr-1"></i>Editing: {{ refNo }}
+      </span>
+      <p-button
+        label="Browse Records"
+        icon="pi pi-folder-open"
+        severity="secondary"
+        outlined
+        (onClick)="openRecordsLookup()"
+        pTooltip="Load an existing opening balance record"
+      />
+      <p-button
+        *ngIf="currentRecordId"
+        label="New"
+        icon="pi pi-plus"
+        severity="secondary"
+        outlined
+        (onClick)="resetForm()"
+        pTooltip="Clear form and create a new record"
+      />
+    </div>
+  </div>
 
   <!-- Header: Invoice No, Date, Warehouse, Rem -->
   <div class="grid grid-cols-12 gap-4 mb-4">
@@ -16,6 +40,7 @@
         class="w-full"
         placeholder="Invoice No."
         [class.ng-invalid]="submitted && !refNo.trim()"
+        [disabled]="!!currentRecordId"
       />
       <small class="text-red-500 block" *ngIf="submitted && !refNo.trim()">Invoice No. is required</small>
     </div>
@@ -164,7 +189,7 @@
     <span class="text-muted-color text-sm">{{ lines().length }} item(s)</span>
     <div class="flex items-center gap-4">
       <span class="font-bold text-lg">Total: {{ totalAmount | number:'1.2-2' }}</span>
-      <p-button label="Save" icon="pi pi-check" (onClick)="save()" />
+      <p-button [label]="currentRecordId ? 'Update' : 'Save'" icon="pi pi-check" (onClick)="save()" />
     </div>
   </div>
 </div>
@@ -231,6 +256,72 @@
     <ng-template #emptymessage>
       <tr>
         <td colspan="5" class="text-center py-4 text-muted-color">No stock details found</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</p-dialog>
+
+<!-- Existing records lookup dialog -->
+<p-dialog
+  [(visible)]="recordsLookupVisible"
+  header="Browse Opening Balance Records"
+  [style]="{ width: '90vw', maxWidth: '900px' }"
+  [modal]="true"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="true"
+>
+  <div class="mb-4">
+    <p-iconfield>
+      <p-inputicon styleClass="pi pi-search" />
+      <input
+        pInputText
+        type="text"
+        [(ngModel)]="recordsSearch"
+        placeholder="Search by invoice no, warehouse..."
+        class="w-full"
+      />
+    </p-iconfield>
+  </div>
+  <p-table
+    [value]="filteredExistingRecords()"
+    [rows]="10"
+    [paginator]="true"
+    [rowsPerPageOptions]="[10, 20, 30]"
+    [tableStyle]="{ 'min-width': '40rem' }"
+    styleClass="p-datatable-sm p-datatable-striped"
+    [rowHover]="true"
+  >
+    <ng-template #header>
+      <tr>
+        <th style="min-width: 12rem">Invoice No.</th>
+        <th style="min-width: 10rem">Date</th>
+        <th style="min-width: 10rem">Warehouse</th>
+        <th style="min-width: 10rem">Amount</th>
+        <th style="min-width: 10rem">Remark</th>
+        <th style="width: 8rem">Select</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-record>
+      <tr (dblclick)="onSelectExistingRecord(record)" style="cursor: pointer">
+        <td>{{ record.invoice }}</td>
+        <td>{{ record.date | date:'dd-MM-yyyy' }}</td>
+        <td>{{ getWarehouseDescription(record.warehouse) }}</td>
+        <td>{{ record.amount | number:'1.2-2' }}</td>
+        <td>{{ record.remark }}</td>
+        <td>
+          <p-button
+            label="Select"
+            icon="pi pi-check"
+            size="small"
+            (onClick)="onSelectExistingRecord(record)"
+          />
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="6" class="text-center py-4 text-muted-color">No records found</td>
       </tr>
     </ng-template>
   </p-table>

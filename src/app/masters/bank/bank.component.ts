@@ -38,7 +38,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
         ConfirmDialogModule
     ],
     templateUrl: './bank.component.html',
-    providers: [MessageService, ConfirmationService]
+    providers: [ConfirmationService]
 })
 export class BankComponent implements OnInit {
     bankDialog = false;

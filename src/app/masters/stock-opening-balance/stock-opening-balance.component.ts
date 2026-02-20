@@ -10,6 +10,7 @@ import { StockDetailLookupModel } from '../../core/models/stock/stock-detail-loo
 import { UnitResponseModel } from '../../core/models/unit/unit-response.model';
 import {
   StockOpeningBalanceLineModel,
+  StockOpeningBalanceResponse,
   CreateStockOpeningBalanceRequest,
 } from '../../core/models/stock-opening-balance.model';
 import { DateUtil } from '../../core/utils/date.util';
@@ -60,6 +61,12 @@ export class StockOpeningBalanceComponent implements OnInit {
   stockLookupSearch = '';
   stockLookupTargetRowIndex: number | null = null; // null = "Add from list" mode
 
+  // Existing records browse
+  currentRecordId: string | null = null; // null = new record, string = editing existing
+  existingRecords = signal<StockOpeningBalanceResponse[]>([]);
+  recordsLookupVisible = false;
+  recordsSearch = '';
+
   submitted = false;
 
   constructor(
@@ -108,6 +115,74 @@ export class StockOpeningBalanceComponent implements OnInit {
           severity: 'error',
           summary: 'Error',
           detail: 'Failed to load units',
+        }),
+    });
+  }
+
+  loadExistingRecords(): void {
+    this.stockOpeningBalanceService.getOpeningBalances().subscribe({
+      next: (data) => this.existingRecords.set(data),
+      error: () =>
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to load existing records',
+        }),
+    });
+  }
+
+  openRecordsLookup(): void {
+    this.recordsSearch = '';
+    this.loadExistingRecords();
+    this.recordsLookupVisible = true;
+  }
+
+  filteredExistingRecords(): StockOpeningBalanceResponse[] {
+    const search = (this.recordsSearch || '').toLowerCase();
+    if (!search.trim()) return this.existingRecords();
+    return this.existingRecords().filter(
+      (r) =>
+        r.invoice?.toLowerCase().includes(search) ||
+        r.warehouse?.toLowerCase().includes(search) ||
+        String(r.amount).includes(search)
+    );
+  }
+
+  onSelectExistingRecord(record: StockOpeningBalanceResponse): void {
+    this.recordsLookupVisible = false;
+    this.stockOpeningBalanceService.getOpeningBalanceDetail(record.id).subscribe({
+      next: (detail) => {
+        this.currentRecordId = detail.id;
+        this.refNo = detail.refNo;
+        this.date = detail.date ? new Date(detail.date) : new Date();
+        this.warehouseId = detail.warehouseId;
+        this.remark = detail.remark?.trim() || '';
+        this.submitted = false;
+
+        const mapped: StockOpeningBalanceLineModel[] = detail.lines.map((l) => {
+          // Resolve stock name and unit description from already-loaded data
+          const stockDetailMatch = this.stockDetails().find(
+            (d) => d.id === l.stockDetailId
+          );
+          return {
+            stockDetailId: l.stockDetailId,
+            stockCode: l.stockCode,
+            stockName: stockDetailMatch?.stockName ?? l.stockCode,
+            prevStock: 0,
+            qty: l.qty,
+            unit: l.unit,
+            unitDescription: this.getUnitDescription(l.unit) || l.unit,
+            purchasePrice: l.purchasePrice,
+            amount: l.amount,
+          };
+        });
+        this.lines.set(mapped);
+      },
+      error: () =>
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to load record details',
         }),
     });
   }
@@ -274,12 +349,18 @@ export class StockOpeningBalanceComponent implements OnInit {
       })),
     };
 
-    this.stockOpeningBalanceService.createOpeningBalance(body).subscribe({
+    const request$ = this.currentRecordId
+      ? this.stockOpeningBalanceService.updateOpeningBalance(this.currentRecordId, body)
+      : this.stockOpeningBalanceService.createOpeningBalance(body);
+
+    request$.subscribe({
       next: () => {
         this.messageService.add({
           severity: 'success',
           summary: 'Success',
-          detail: 'Stock Opening Balance saved',
+          detail: this.currentRecordId
+            ? 'Stock Opening Balance updated'
+            : 'Stock Opening Balance saved',
         });
         this.resetForm();
       },
@@ -293,6 +374,7 @@ export class StockOpeningBalanceComponent implements OnInit {
   }
 
   resetForm(): void {
+    this.currentRecordId = null;
     this.refNo = '';
     this.date = new Date();
     this.warehouseId = null;

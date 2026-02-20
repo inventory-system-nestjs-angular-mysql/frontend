@@ -289,7 +289,7 @@ export class CustomerComponent implements OnInit {
 
     saveCustomer() {
         this.submitted = true;
-        if (!this.customer.code?.trim() || !this.customer.name?.trim()) {
+        if (!this.customer.code?.trim() || !this.customer.name?.trim() || !this.customer.cityId) {
             return;
         }
         const customerToSend = {

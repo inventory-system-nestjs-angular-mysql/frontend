@@ -46,3 +46,28 @@ export interface StockOpeningBalanceResponse {
   remark?: string | null;
   rem?: number | null;
 }
+
+/**
+ * A single line from an existing opening balance invoice (used when loading for edit)
+ */
+export interface OpeningBalanceDetailLine {
+  stockDetailId: string;
+  stockCode: string;
+  unit: string;
+  qty: number;
+  purchasePrice: number;
+  amount: number;
+}
+
+/**
+ * Full detail of an existing opening balance invoice (header + lines)
+ */
+export interface OpeningBalanceDetail {
+  id: string;
+  refNo: string;
+  date: string | Date;
+  warehouseId: string;
+  remark?: string | null;
+  amount: number;
+  lines: OpeningBalanceDetailLine[];
+}

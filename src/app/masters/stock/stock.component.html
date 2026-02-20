@@ -105,7 +105,7 @@
 
                                 <!-- Group -->
                                 <div class="col-span-12 md:col-span-6">
-                                    <label for="group" class="block font-bold mb-2">Group</label>
+                                    <label for="group" class="block font-bold mb-2">Group <span class="text-red-500">*</span></label> 
                                     <p-select
                                         [(ngModel)]="stock.stockGroupId"
                                         [options]="stockGroups()"
@@ -171,7 +171,7 @@
                                 <!-- Supplier -->
                                 <div class="col-span-12 md:col-span-6">
                                     <label for="supplier" class="block font-bold mb-2">Supplier</label>
-                                    <p-select [(ngModel)]="stock.supplier" [options]="suppliers" optionLabel="label" optionValue="value" placeholder="Select Supplier" fluid [showClear]="true" />
+                                    <p-select [(ngModel)]="stock.supplier" [options]="suppliers()" optionLabel="name" optionValue="id" placeholder="Select Supplier" fluid [showClear]="true" />
                                 </div>
 
                                 <!-- Tax Options -->
@@ -958,7 +958,7 @@
                                     pInputText
                                     [(ngModel)]="row.stockCode"
                                     (ngModelChange)="row.stockCode = ($event || '').toUpperCase()"
-                                    (blur)="row.stockCode = row.stockCode?.trim()"
+                                    (blur)="row.stockCode = (row.stockCode || '').trim()"
                                     class="w-32"
                                 />
                             </td>
@@ -969,7 +969,7 @@
                                 <p-inputnumber [(ngModel)]="row.factor" mode="decimal" [min]="0" [maxFractionDigits]="4" styleClass="w-full" />
                             </td>
                             <td class="p-2">
-                                <p-inputnumber [(ngModel)]="row.purchase" mode="decimal" [min]="0" [useGrouping]="true" styleClass="w-full" />
+                                <p-inputnumber [ngModel]="(stock.purchasePrice || 0) * (row.factor || 1)" mode="decimal" [useGrouping]="true" [disabled]="true" styleClass="w-full" />
                             </td>
                             <td class="p-2">
                                 <p-inputnumber [(ngModel)]="row.wholesale" mode="decimal" [min]="0" [useGrouping]="true" styleClass="w-full" />

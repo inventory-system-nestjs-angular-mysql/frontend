@@ -33,6 +33,8 @@ import { BrandService } from '../brand/brand.service';
 import { UnitResponseModel } from '../../core/models/unit';
 import { UnitService } from '../unit/unit.service';
 import { UploadService } from '../../core/services/upload.service';
+import { SupplierResponseModel } from '../../core/models/supplier';
+import { SupplierService } from '../supplier/supplier.service';
 
 @Component({
     selector: 'app-stock',
@@ -67,7 +69,7 @@ export class StockComponent implements OnInit {
     stocks = signal<StockResponseModel[]>([]);
     stockGroups = signal<StockGroupResponseModel[]>([]);
     brands = signal<BrandResponseModel[]>([]);
-    // suppliers = signal<BrandResponseModel[]>([]);
+    suppliers = signal<SupplierResponseModel[]>([]);
     units = signal<UnitResponseModel[]>([]);
     stock: Partial<CreateStockModel & { cSTKpk?: string; priceRows?: StockPriceRow[] }> = {
         taxOption: 'Tax',
@@ -84,19 +86,13 @@ export class StockComponent implements OnInit {
     ];
     @ViewChild('dt') dt!: Table;
 
-    // Dropdown options (these would typically come from backend)
-    suppliers = [
-        { label: 'MATT', value: 'MATT' },
-        { label: 'Supplier 1', value: 'Supplier 1' },
-        { label: 'Supplier 2', value: 'Supplier 2' }
-    ];
-
     constructor(
         private confirmationService: ConfirmationService,
         private messageService: MessageService,
         private stockService: StockService,
         private stockGroupService: StockGroupService,
         private brandService: BrandService,
+        private supplierService: SupplierService,
         private unitService: UnitService,
         private uploadService: UploadService
     ) {}
@@ -105,6 +101,7 @@ export class StockComponent implements OnInit {
         this.loadStocks();
         this.loadStockGroups();
         this.loadBrands();
+        this.loadSuppliers();
         this.loadUnits();
     }
 
@@ -126,6 +123,13 @@ export class StockComponent implements OnInit {
         this.brandService.getBrands().subscribe({
             next: (data) => this.brands.set(data),
             error: () => console.error('Failed to load brands')
+        });
+    }
+
+    loadSuppliers() {
+        this.supplierService.getSuppliers().subscribe({
+            next: (data) => this.suppliers.set(data),
+            error: () => console.error('Failed to load suppliers')
         });
     }
     
@@ -200,7 +204,7 @@ export class StockComponent implements OnInit {
 
     saveStock() {
         this.submitted = true;
-        if (this.stock.stockName?.trim()) {
+        if (this.stock.stockName?.trim() && this.stock.stockGroupId != null) {
             // Map priceRows to stockDetails for API
             const stockToSend = {
                 ...this.stock,

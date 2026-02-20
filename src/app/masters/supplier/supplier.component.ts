@@ -262,7 +262,7 @@ export class SupplierComponent implements OnInit {
 
     saveSupplier() {
         this.submitted = true;
-        if (!this.supplier.code?.trim() || !this.supplier.name?.trim()) {
+        if (!this.supplier.code?.trim() || !this.supplier.name?.trim() || !this.supplier.cityId) {
             // Required fields missing, do not close dialog
             return;
         }
