@@ -75,6 +75,7 @@ export class StockComponent implements OnInit {
         taxOption: 'Tax',
         priceRows: []
     };
+    stockImageDataUrl: string | null = null;
     selectedStocks: StockResponseModel[] = [];
     submitted = false;
     cols = [
@@ -145,6 +146,7 @@ export class StockComponent implements OnInit {
             taxOption: 'Tax',
             priceRows: []
         };
+        this.stockImageDataUrl = null;
         this.submitted = false;
         this.stockDialog = true;
     }
@@ -154,6 +156,13 @@ export class StockComponent implements OnInit {
             ...stock,
             stockGroupId: stock.stockGroupId ?? undefined // Convert null to undefined
         };
+        this.stockImageDataUrl = null;
+        if (stock.imagePath) {
+            this.uploadService.getImageAsBase64(stock.imagePath).subscribe({
+                next: (r) => (this.stockImageDataUrl = r.dataUrl || null),
+                error: () => (this.stockImageDataUrl = null),
+            });
+        }
         // Map stockDetails to priceRows for the form (if needed for backward compatibility)
         if (stock.stockDetails) {
             this.stock.priceRows = stock.stockDetails; // Keep priceRows for form binding
@@ -182,6 +191,7 @@ export class StockComponent implements OnInit {
     hideDialog() {
         this.stockDialog = false;
         this.submitted = false;
+        this.stockImageDataUrl = null;
     }
 
     deleteStock(stock: StockResponseModel) {
@@ -268,6 +278,10 @@ export class StockComponent implements OnInit {
             this.uploadService.uploadImage(file).subscribe({
                 next: (response) => {
                     this.stock.imagePath = response.path;
+                    this.uploadService.getImageAsBase64(response.path).subscribe({
+                        next: (r) => (this.stockImageDataUrl = r.dataUrl || null),
+                        error: () => (this.stockImageDataUrl = null),
+                    });
                     this.messageService.add({ 
                         severity: 'success', 
                         summary: 'Success', 

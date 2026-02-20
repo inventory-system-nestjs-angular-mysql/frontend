@@ -73,6 +73,7 @@ export class CustomerComponent implements OnInit {
     submitted = false;
     customerInvoices = signal<CustomerInvoiceModel[]>([]);
     editableInvoices = signal<EditableInvoiceModel[]>([]);
+    customerImageDataUrl: string | null = null;
     cols = [
         { field: 'code', header: 'Code' },
         { field: 'name', header: 'Name' },
@@ -172,6 +173,7 @@ export class CustomerComponent implements OnInit {
             priceType: 3, // Default to 'All'
             gender: 0 // Default to Male
         };
+        this.customerImageDataUrl = null;
         this.customerInvoices.set([]);
         this.editableInvoices.set([]);
         this.submitted = false;
@@ -221,6 +223,13 @@ export class CustomerComponent implements OnInit {
             gender: customer.gender ?? 0,
             nik: customer.nik ?? undefined
         };
+        this.customerImageDataUrl = null;
+        if (customer.imagePath) {
+            this.uploadService.getImageAsBase64(customer.imagePath).subscribe({
+                next: (r) => (this.customerImageDataUrl = r.dataUrl || null),
+                error: () => (this.customerImageDataUrl = null),
+            });
+        }
         this.customerInvoices.set([]);
         this.editableInvoices.set([]);
         this.customerService.getCustomerInvoices(customer.id).subscribe({
@@ -265,6 +274,7 @@ export class CustomerComponent implements OnInit {
     hideDialog() {
         this.customerDialog = false;
         this.submitted = false;
+        this.customerImageDataUrl = null;
         this.customerInvoices.set([]);
         this.editableInvoices.set([]);
     }
@@ -339,26 +349,29 @@ export class CustomerComponent implements OnInit {
         }
     }
 
-    onImageSelect(event: any) {
+      onImageSelect(event: any) {
         const file = event.target?.files?.[0] || event.files?.[0];
         if (file) {
-            // Upload the image
             this.uploadService.uploadImage(file).subscribe({
                 next: (response) => {
                     this.customer.imagePath = response.path;
-                    this.messageService.add({ 
-                        severity: 'success', 
-                        summary: 'Success', 
-                        detail: 'Image uploaded successfully' 
+                    this.uploadService.getImageAsBase64(response.path).subscribe({
+                        next: (r) => (this.customerImageDataUrl = r.dataUrl || null),
+                        error: () => (this.customerImageDataUrl = null),
+                    });
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Success',
+                        detail: 'Image uploaded successfully',
                     });
                 },
                 error: (error) => {
-                    this.messageService.add({ 
-                        severity: 'error', 
-                        summary: 'Error', 
-                        detail: error.error?.message || 'Failed to upload image' 
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: error.error?.message || 'Failed to upload image',
                     });
-                }
+                },
             });
         }
     }

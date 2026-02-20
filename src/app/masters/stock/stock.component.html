@@ -285,10 +285,10 @@
                                 <!-- Image Display -->
                                 <div class="col-span-12">
                                     <div class="border-2 border-dashed border-surface-300 dark:border-surface-700 rounded-border p-4 bg-surface-50 dark:bg-surface-900" style="min-height: 200px;">
-                                        <div *ngIf="stock.imagePath" class="flex items-center justify-center h-full">
-                                            <img [src]="getImageUrl(stock.imagePath)" [alt]="stock.stockName" class="max-w-full max-h-48 object-contain" />
+                                        <div *ngIf="stockImageDataUrl" class="flex items-center justify-center h-full">
+                                            <img [src]="stockImageDataUrl" [alt]="stock.stockName" class="max-w-full max-h-48 object-contain" />
                                         </div>
-                                        <div *ngIf="!stock.imagePath" class="flex items-center justify-center h-full text-muted-color">
+                                        <div *ngIf="!stockImageDataUrl" class="flex items-center justify-center h-full text-muted-color">
                                             <div class="text-center">
                                                 <i class="pi pi-image text-4xl mb-2"></i>
                                                 <p>No image selected</p>

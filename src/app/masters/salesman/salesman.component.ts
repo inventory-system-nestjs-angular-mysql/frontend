@@ -53,6 +53,7 @@ export class SalesmanComponent implements OnInit {
     salesmanDialog = false;
     salesmen = signal<SalesmanResponseModel[]>([]);
     salesman: Partial<CreateSalesmanModel & { id?: string }> = {};
+    salesmanImageDataUrl: string | null = null;
     selectedSalesmen: SalesmanResponseModel[] = [];
     submitted = false;
     cols = [
@@ -88,6 +89,7 @@ export class SalesmanComponent implements OnInit {
             commission: 0,
             isSuspended: false
         };
+        this.salesmanImageDataUrl = null;
         this.submitted = false;
         this.salesmanDialog = true;
     }
@@ -106,6 +108,13 @@ export class SalesmanComponent implements OnInit {
             imagePath: salesman.imagePath ?? undefined,
             special: salesman.special ?? undefined
         };
+        this.salesmanImageDataUrl = null;
+        if (salesman.imagePath) {
+            this.uploadService.getImageAsBase64(salesman.imagePath).subscribe({
+                next: (r) => (this.salesmanImageDataUrl = r.dataUrl || null),
+                error: () => (this.salesmanImageDataUrl = null),
+            });
+        }
         this.salesmanDialog = true;
     }
 
@@ -128,6 +137,7 @@ export class SalesmanComponent implements OnInit {
     hideDialog() {
         this.salesmanDialog = false;
         this.submitted = false;
+        this.salesmanImageDataUrl = null;
     }
 
     deleteSalesman(salesman: SalesmanResponseModel) {
@@ -188,6 +198,10 @@ export class SalesmanComponent implements OnInit {
             this.uploadService.uploadImage(file).subscribe({
                 next: (response) => {
                     this.salesman.imagePath = response.path;
+                    this.uploadService.getImageAsBase64(response.path).subscribe({
+                        next: (r) => (this.salesmanImageDataUrl = r.dataUrl || null),
+                        error: () => (this.salesmanImageDataUrl = null),
+                    });
                     this.messageService.add({ 
                         severity: 'success', 
                         summary: 'Success', 
