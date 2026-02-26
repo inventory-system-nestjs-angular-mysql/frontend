@@ -69,14 +69,7 @@ export class StockGroupComponent implements OnInit {
     loadStockGroups() {
         this.stockGroupService.getStockGroups().subscribe({
             next: (data) => {
-                // Sort by serialNumber (null/undefined values go to the end)
-                const sorted = [...data].sort((a, b) => {
-                    if (!a.serialNumber && !b.serialNumber) return 0;
-                    if (!a.serialNumber) return 1;
-                    if (!b.serialNumber) return -1;
-                    return (a.serialNumber || '').localeCompare(b.serialNumber || '');
-                });
-                this.stockGroups.set(sorted);
+                this.stockGroups.set(data);
             },
             error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load Stock Groups' })
         });

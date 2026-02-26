@@ -65,14 +65,7 @@ export class BrandComponent implements OnInit {
     loadBrands() {
         this.brandService.getBrands().subscribe({
             next: (data) => {
-                // Sort by serialNumber (null/undefined values go to the end)
-                const sorted = [...data].sort((a, b) => {
-                    if (!a.serialNumber && !b.serialNumber) return 0;
-                    if (!a.serialNumber) return 1;
-                    if (!b.serialNumber) return -1;
-                    return (a.serialNumber || '').localeCompare(b.serialNumber || '');
-                });
-                this.brands.set(sorted);
+                this.brands.set(data);
             },
             error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load Brands' })
         });

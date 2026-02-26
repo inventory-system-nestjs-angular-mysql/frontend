@@ -76,10 +76,6 @@
                 <label for="taxRate" class="block font-bold mb-3">Tax Rate</label>
                 <p-inputnumber id="taxRate" [(ngModel)]="currency.taxRate" mode="decimal" [min]="0" [useGrouping]="true" [maxFractionDigits]="4" fluid />
             </div>
-            <div>
-                <label for="serialNumber" class="block font-bold mb-3">Serial Number</label>
-                <input type="text" pInputText id="serialNumber" [(ngModel)]="currency.serialNumber" (blur)="currency.serialNumber = currency.serialNumber?.trim()" fluid maxlength="10" />
-            </div>
         </div>
     </ng-template>
     <ng-template #footer>

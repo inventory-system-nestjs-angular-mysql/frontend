@@ -936,8 +936,8 @@
                 <table class="w-full">
                     <thead>
                         <tr class="border-b border-surface-200 dark:border-surface-700">
-                            <th class="text-left p-3 font-semibold">Stock Code</th>
-                            <th class="text-left p-3 font-semibold">Unit (F2)</th>
+                            <th class="text-left p-3 font-semibold">Stock Code <span class="text-red-500">*</span></th>
+                            <th class="text-left p-3 font-semibold">Unit (F2) <span class="text-red-500">*</span></th>
                             <th class="text-left p-3 font-semibold">Factor</th>
                             <th class="text-left p-3 font-semibold">Purchase</th>
                             <th class="text-left p-3 font-semibold">Wholesale</th>
@@ -960,10 +960,12 @@
                                     (ngModelChange)="row.stockCode = ($event || '').toUpperCase()"
                                     (blur)="row.stockCode = (row.stockCode || '').trim()"
                                     class="w-32"
+                                    [class.ng-invalid]="submitted && !row.stockCode.trim()"
+                                    [class.ng-dirty]="submitted && !row.stockCode.trim()"
                                 />
                             </td>
                             <td class="p-2">
-                                <p-select [(ngModel)]="row.unit" [options]="units()" optionLabel="description" optionValue="id" styleClass="w-full" appendTo="body" />
+                                <p-select [(ngModel)]="row.unit" [options]="units()" optionLabel="description" optionValue="id" styleClass="w-full" appendTo="body" [invalid]="submitted && !row.unit" />
                             </td>
                             <td class="p-2">
                                 <p-inputnumber [(ngModel)]="row.factor" mode="decimal" [min]="0" [maxFractionDigits]="4" styleClass="w-full" />

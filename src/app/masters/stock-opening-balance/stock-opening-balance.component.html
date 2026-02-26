@@ -27,9 +27,9 @@
     </div>
   </div>
 
-  <!-- Header: Invoice No, Date, Warehouse, Rem -->
+  <!-- Header: Invoice No, Date, Warehouse, Currency, Rem -->
   <div class="grid grid-cols-12 gap-4 mb-4">
-    <div class="col-span-12 md:col-span-3">
+    <div class="col-span-12 md:col-span-2">
       <label for="refNo" class="block font-bold mb-2">Invoice No. <span class="text-red-500">*</span></label>
       <input
         type="text"
@@ -44,7 +44,7 @@
       />
       <small class="text-red-500 block" *ngIf="submitted && !refNo.trim()">Invoice No. is required</small>
     </div>
-    <div class="col-span-12 md:col-span-3">
+    <div class="col-span-12 md:col-span-2">
       <label for="date" class="block font-bold mb-2">Date <span class="text-red-500">*</span></label>
       <p-datepicker
         [(ngModel)]="date"
@@ -71,6 +71,21 @@
         [class.ng-invalid]="submitted && !warehouseId"
       />
       <small class="text-red-500 block" *ngIf="submitted && !warehouseId">Warehouse is required</small>
+    </div>
+    <div class="col-span-12 md:col-span-2">
+      <label for="currency" class="block font-bold mb-2">Currency <span class="text-red-500">*</span></label>
+      <p-select
+        [(ngModel)]="currencyId"
+        [options]="currencies()"
+        optionLabel="currency"
+        optionValue="id"
+        placeholder="Select Currency"
+        appendTo="body"
+        fluid
+        id="currency"
+        [invalid]="submitted && !currencyId"
+      />
+      <small class="text-red-500 block" *ngIf="submitted && !currencyId">Currency is required</small>
     </div>
     <div class="col-span-12 md:col-span-3">
       <label for="remark" class="block font-bold mb-2">Rem</label>

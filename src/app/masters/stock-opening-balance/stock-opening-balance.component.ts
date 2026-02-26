@@ -5,9 +5,11 @@ import { StockOpeningBalanceService } from './stock-opening-balance.service';
 import { WarehouseService } from '../warehouse/warehouse.service';
 import { StockService } from '../stock/stock.service';
 import { UnitService } from '../unit/unit.service';
+import { CurrencyService } from '../currency/currency.service';
 import { WarehouseResponseModel } from '../../core/models/warehouse/warehouse-response.model';
 import { StockDetailLookupModel } from '../../core/models/stock/stock-detail-lookup.model';
 import { UnitResponseModel } from '../../core/models/unit/unit-response.model';
+import { CurrencyResponseModel } from '../../core/models/currency/currency-response.model';
 import {
   StockOpeningBalanceLineModel,
   StockOpeningBalanceResponse,
@@ -52,9 +54,11 @@ export class StockOpeningBalanceComponent implements OnInit {
   refNo = '';
   date: Date = new Date();
   warehouseId: string | null = null;
+  currencyId: string | null = null;
   remark = '';
   lines = signal<StockOpeningBalanceLineModel[]>([]);
   warehouses = signal<WarehouseResponseModel[]>([]);
+  currencies = signal<CurrencyResponseModel[]>([]);
   stockDetails = signal<StockDetailLookupModel[]>([]);
   units = signal<UnitResponseModel[]>([]);
   stockLookupVisible = false;
@@ -74,11 +78,13 @@ export class StockOpeningBalanceComponent implements OnInit {
     private stockOpeningBalanceService: StockOpeningBalanceService,
     private warehouseService: WarehouseService,
     private stockService: StockService,
-    private unitService: UnitService
+    private unitService: UnitService,
+    private currencyService: CurrencyService
   ) {}
 
   ngOnInit(): void {
     this.loadWarehouses();
+    this.loadCurrencies();
     this.loadStockDetails();
     this.loadUnits();
   }
@@ -91,6 +97,18 @@ export class StockOpeningBalanceComponent implements OnInit {
           severity: 'error',
           summary: 'Error',
           detail: 'Failed to load warehouses',
+        }),
+    });
+  }
+
+  loadCurrencies(): void {
+    this.currencyService.getCurrencies().subscribe({
+      next: (data) => this.currencies.set(data),
+      error: () =>
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to load currencies',
         }),
     });
   }
@@ -156,6 +174,7 @@ export class StockOpeningBalanceComponent implements OnInit {
         this.refNo = detail.refNo;
         this.date = detail.date ? new Date(detail.date) : new Date();
         this.warehouseId = detail.warehouseId;
+        this.currencyId = detail.currencyId || null;
         this.remark = detail.remark?.trim() || '';
         this.submitted = false;
 
@@ -311,6 +330,14 @@ export class StockOpeningBalanceComponent implements OnInit {
       });
       return;
     }
+    if (!this.currencyId?.trim()) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Validation',
+        detail: 'Currency is required',
+      });
+      return;
+    }
     const validLines = this.lines().filter(
       (r) => r.stockDetailId?.trim() && r.qty > 0 && r.amount >= 0
     );
@@ -337,6 +364,7 @@ export class StockOpeningBalanceComponent implements OnInit {
       refNo: this.refNo.trim(),
       date: dateStr,
       warehouseId: this.warehouseId.trim(),
+      currencyId: this.currencyId.trim(),
       remark: this.remark?.trim() || null,
       lines: validLines.map((r) => ({
         stockDetailId: r.stockDetailId,
@@ -378,6 +406,7 @@ export class StockOpeningBalanceComponent implements OnInit {
     this.refNo = '';
     this.date = new Date();
     this.warehouseId = null;
+    this.currencyId = null;
     this.remark = '';
     this.lines.set([]);
     this.submitted = false;

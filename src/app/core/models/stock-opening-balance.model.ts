@@ -21,6 +21,7 @@ export interface CreateStockOpeningBalanceRequest {
   refNo: string;
   date: string; // ISO date
   warehouseId: string;
+  currencyId: string;
   remark?: string | null;
   lines: {
     stockDetailId: string;
@@ -67,6 +68,7 @@ export interface OpeningBalanceDetail {
   refNo: string;
   date: string | Date;
   warehouseId: string;
+  currencyId: string;
   remark?: string | null;
   amount: number;
   lines: OpeningBalanceDetailLine[];

@@ -215,6 +215,18 @@ export class StockComponent implements OnInit {
     saveStock() {
         this.submitted = true;
         if (this.stock.stockName?.trim() && this.stock.stockGroupId != null) {
+            // Validate price rows: stockCode and unit are required
+            const rows = this.stock.priceRows || [];
+            const invalidRows = rows.filter(r => !r.stockCode?.trim() || !r.unit?.trim());
+            if (invalidRows.length > 0) {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Validation',
+                    detail: 'Stock Code and Unit are required',
+                });
+                return;
+            }
+
             // Map priceRows to stockDetails for API
             const stockToSend = {
                 ...this.stock,
@@ -256,7 +268,7 @@ export class StockComponent implements OnInit {
         }
         this.stock.priceRows.push({
             stockCode: '',
-            unit: 'Pcs',
+            unit: '',
             factor: 1,
             purchase: 0,
             wholesale: 0,

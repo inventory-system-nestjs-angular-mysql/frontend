@@ -263,51 +263,64 @@ export class SupplierComponent implements OnInit {
     saveSupplier() {
         this.submitted = true;
         if (!this.supplier.code?.trim() || !this.supplier.name?.trim() || !this.supplier.cityId) {
-            // Required fields missing, do not close dialog
             return;
         }
-        const supplierToSend = { ...this.supplier };
 
-        // Validate invoices before proceeding
+        // Validate invoices before touching the backend
         const invoices = this.editableInvoices();
-        const invalidInvoices = invoices.filter(inv => 
+        const invalidInvoices = invoices.filter(inv =>
             !inv.invoice?.trim() || !inv.date || !inv.warehouse || !inv.currency || !inv.amount || inv.amount <= 0
         );
+        if (invalidInvoices.length > 0) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Validation Error',
+                detail: 'Please fill all required invoice fields (Invoice, Date, Warehouse, Currency, Amount > 0)',
+            });
+            return;
+        }
         const invoiceNumbers = invoices.map(inv => inv.invoice?.trim()).filter(Boolean);
         const duplicates = invoiceNumbers.filter((inv, idx, arr) => arr.indexOf(inv) !== idx);
-        if (invalidInvoices.length > 0 || duplicates.length > 0) {
-            // Do not close dialog if invoice validation fails
-            this.saveSupplierInvoices('validate-only'); // Will show messages but not save
+        if (duplicates.length > 0) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Duplicate Invoice',
+                detail: `Duplicate invoice number(s): ${[...new Set(duplicates)].join(', ')}`,
+            });
             return;
         }
 
+        const supplierToSend = { ...this.supplier };
+
         if (this.supplier.id) {
-            // Update
             const { id, ...updateDto } = supplierToSend;
             this.supplierService.updateSupplier(id!, updateDto).subscribe({
                 next: () => {
-                    // Save invoices after supplier is updated
-                    this.saveSupplierInvoices(id!);
                     this.loadSuppliers();
-                    this.messageService.add({ severity: 'success', summary: 'Successful', detail: 'Supplier Updated', life: 3000 });
-                    this.supplierDialog = false;
-                    this.supplier = {};
-                    this.editableInvoices.set([]);
+                    // Close dialog only after invoices are saved successfully
+                    this.saveSupplierInvoices(id!, () => {
+                        this.messageService.add({ severity: 'success', summary: 'Successful', detail: 'Supplier Updated', life: 3000 });
+                        this.supplierDialog = false;
+                        this.supplier = {};
+                        this.editableInvoices.set([]);
+                    });
                 },
                 error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to update Supplier' })
             });
         } else {
-            // Create
             const { id, ...createDto } = supplierToSend;
             this.supplierService.createSupplier(createDto as CreateSupplierModel).subscribe({
                 next: (createdSupplier) => {
-                    // Save invoices after supplier is created
-                    this.saveSupplierInvoices(createdSupplier.id);
                     this.loadSuppliers();
-                    this.messageService.add({ severity: 'success', summary: 'Successful', detail: 'Supplier Created', life: 3000 });
-                    this.supplierDialog = false;
-                    this.supplier = {};
-                    this.editableInvoices.set([]);
+                    // Store the new ID so a retry on invoice failure does UPDATE, not CREATE again
+                    this.supplier.id = createdSupplier.id;
+                    // Close dialog only after invoices are saved successfully
+                    this.saveSupplierInvoices(createdSupplier.id, () => {
+                        this.messageService.add({ severity: 'success', summary: 'Successful', detail: 'Supplier Created', life: 3000 });
+                        this.supplierDialog = false;
+                        this.supplier = {};
+                        this.editableInvoices.set([]);
+                    });
                 },
                 error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to create Supplier' })
             });
@@ -437,50 +450,17 @@ export class SupplierComponent implements OnInit {
         }
     }
 
-    saveSupplierInvoices(supplierId: string) {
-        // If called with 'validate-only', just run validation and show errors, do not save
-        if (supplierId === 'validate-only') {
-            const invoices = this.editableInvoices();
-            const invalidInvoices = invoices.filter(inv => 
-                !inv.invoice?.trim() || !inv.date || !inv.warehouse || !inv.currency || !inv.amount || inv.amount <= 0
-            );
-            if (invalidInvoices.length > 0) {
-                this.messageService.add({ 
-                    severity: 'error', 
-                    summary: 'Validation Error', 
-                    detail: 'Please fill all required invoice fields (Invoice, Date, Warehouse, Currency, Amount > 0)'
-                });
-            }
-            const invoiceNumbers = invoices.map(inv => inv.invoice?.trim()).filter(Boolean);
-            const duplicates = invoiceNumbers.filter((inv, idx, arr) => arr.indexOf(inv) !== idx);
-            if (duplicates.length > 0) {
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Duplicate Invoice',
-                    detail: `Duplicate invoice number(s) found: ${[...new Set(duplicates)].join(', ')}`
-                });
-            }
-            return;
-        }
+    saveSupplierInvoices(supplierId: string, onSuccess?: () => void) {
         const invoices = this.editableInvoices();
 
-        // Validate all invoices have required fields
-        const invalidInvoices = invoices.filter(inv => 
-            !inv.invoice?.trim() || !inv.date || !inv.warehouse || !inv.currency || !inv.amount || inv.amount <= 0
-        );
-
-        // Check for duplicate invoice numbers
-        const invoiceNumbers = invoices.map(inv => inv.invoice?.trim()).filter(Boolean);
-        const duplicates = invoiceNumbers.filter((inv, idx, arr) => arr.indexOf(inv) !== idx);
-
-        if (invalidInvoices.length > 0 || duplicates.length > 0) {
-            // If any validation fails, do not send to API
+        // No invoices to save — treat as success
+        if (invoices.length === 0) {
+            onSuccess?.();
             return;
         }
 
-        // Send all invoices as bulk - backend will decide create vs update
         const invoicesToSend = invoices.map(inv => ({
-            id: inv.id || undefined, // Include ID if it exists, backend will handle create/update
+            id: inv.id || undefined,
             refNo: inv.invoice!.trim(),
             date: inv.date instanceof Date ? inv.date.toISOString() : inv.date,
             warehouseId: inv.warehouse!,
@@ -488,39 +468,37 @@ export class SupplierComponent implements OnInit {
             value: inv.amount!,
             remark: inv.remark ?? null,
             salesmanId: "..default..............",
-            opening: 1, // Mark as opening balance
+            opening: 1,
         }));
 
         this.supplierService.createSupplierInvoices(supplierId, invoicesToSend).subscribe({
-            next: (data) => {
-                // Reload invoices to get fresh data with IDs
-                if (this.supplierDialog) {
-                    this.supplierService.getSupplierInvoices(supplierId).subscribe({
-                        next: (invoiceData) => {
-                            this.supplierInvoices.set(invoiceData);
-                            const editable = invoiceData.map(inv => ({
-                                id: inv.id,
-                                invoice: inv.invoice,
-                                date: inv.date ? new Date(inv.date) : null,
-                                warehouse: inv.warehouse || null,
-                                currency: inv.currency || null,
-                                amount: inv.amount || null,
-                                remark: inv.remark || null,
-                                rem: inv.rem || null
-                            }));
-                            this.editableInvoices.set(editable);
-                        },
-                        error: () => {
-                            // Silently fail - invoices are optional
-                        }
-                    });
-                }
+            next: () => {
+                // Reload invoices to refresh IDs from backend
+                this.supplierService.getSupplierInvoices(supplierId).subscribe({
+                    next: (invoiceData) => {
+                        this.supplierInvoices.set(invoiceData);
+                        const editable = invoiceData.map(inv => ({
+                            id: inv.id,
+                            invoice: inv.invoice,
+                            date: inv.date ? new Date(inv.date) : null,
+                            warehouse: inv.warehouse || null,
+                            currency: inv.currency || null,
+                            amount: inv.amount || null,
+                            remark: inv.remark || null,
+                            rem: inv.rem || null
+                        }));
+                        this.editableInvoices.set(editable);
+                    },
+                    error: () => {}
+                });
+                onSuccess?.();
             },
             error: (error) => {
-                this.messageService.add({ 
-                    severity: 'warn', 
-                    summary: 'Warning', 
-                    detail: 'Supplier saved but some invoices may not have been saved: ' + (error.error?.message || 'Unknown error')
+                // Show error and keep dialog open — do NOT call onSuccess
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: error.error?.message || 'Failed to save invoices',
                 });
             }
         });

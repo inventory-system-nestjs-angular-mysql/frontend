@@ -302,6 +302,31 @@ export class CustomerComponent implements OnInit {
         if (!this.customer.code?.trim() || !this.customer.name?.trim() || !this.customer.cityId) {
             return;
         }
+
+        // Validate invoices before touching the backend
+        const invoices = this.editableInvoices();
+        const invalidInvoices = invoices.filter(inv =>
+            !inv.invoice?.trim() || !inv.date || !inv.warehouse || !inv.currency || !inv.amount || inv.amount <= 0
+        );
+        if (invalidInvoices.length > 0) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Validation Error',
+                detail: 'Please fill all required invoice fields (Invoice, Date, Warehouse, Currency, Amount > 0)',
+            });
+            return;
+        }
+        const invoiceNumbers = invoices.map(inv => inv.invoice?.trim()).filter(Boolean);
+        const duplicates = invoiceNumbers.filter((inv, idx, arr) => arr.indexOf(inv) !== idx);
+        if (duplicates.length > 0) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Duplicate Invoice',
+                detail: `Duplicate invoice number(s): ${[...new Set(duplicates)].join(', ')}`,
+            });
+            return;
+        }
+
         const customerToSend = {
             ...this.customer,
             createDate: DateUtil.toDateOnlyString(this.customer.createDate) ?? undefined,
@@ -309,27 +334,18 @@ export class CustomerComponent implements OnInit {
             birthday: DateUtil.toDateOnlyString(this.customer.birthday) ?? undefined
         };
 
-        const invoices = this.editableInvoices();
-        const invalidInvoices = invoices.filter(inv =>
-            !inv.invoice?.trim() || !inv.date || !inv.warehouse || !inv.currency || !inv.amount || inv.amount <= 0
-        );
-        const invoiceNumbers = invoices.map(inv => inv.invoice?.trim()).filter(Boolean);
-        const duplicates = invoiceNumbers.filter((inv, idx, arr) => arr.indexOf(inv) !== idx);
-        if (invalidInvoices.length > 0 || duplicates.length > 0) {
-            this.saveCustomerInvoices('validate-only');
-            return;
-        }
-
         if (this.customer.id) {
             const { id, ...updateDto } = customerToSend;
             this.customerService.updateCustomer(id!, updateDto as Partial<CreateCustomerModel>).subscribe({
                 next: () => {
-                    this.saveCustomerInvoices(id!);
                     this.loadCustomers();
-                    this.messageService.add({ severity: 'success', summary: 'Successful', detail: 'Customer Updated', life: 3000 });
-                    this.customerDialog = false;
-                    this.customer = {};
-                    this.editableInvoices.set([]);
+                    // Close dialog only after invoices are saved successfully
+                    this.saveCustomerInvoices(id!, () => {
+                        this.messageService.add({ severity: 'success', summary: 'Successful', detail: 'Customer Updated', life: 3000 });
+                        this.customerDialog = false;
+                        this.customer = {};
+                        this.editableInvoices.set([]);
+                    });
                 },
                 error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to update Customer' })
             });
@@ -337,12 +353,16 @@ export class CustomerComponent implements OnInit {
             const { id, ...createDto } = customerToSend;
             this.customerService.createCustomer(createDto as unknown as CreateCustomerModel).subscribe({
                 next: (createdCustomer) => {
-                    this.saveCustomerInvoices(createdCustomer.id);
                     this.loadCustomers();
-                    this.messageService.add({ severity: 'success', summary: 'Successful', detail: 'Customer Created', life: 3000 });
-                    this.customerDialog = false;
-                    this.customer = {};
-                    this.editableInvoices.set([]);
+                    // Store the new ID so a retry on invoice failure does UPDATE, not CREATE again
+                    this.customer.id = createdCustomer.id;
+                    // Close dialog only after invoices are saved successfully
+                    this.saveCustomerInvoices(createdCustomer.id, () => {
+                        this.messageService.add({ severity: 'success', summary: 'Successful', detail: 'Customer Created', life: 3000 });
+                        this.customerDialog = false;
+                        this.customer = {};
+                        this.editableInvoices.set([]);
+                    });
                 },
                 error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to create Customer' })
             });
@@ -456,39 +476,15 @@ export class CustomerComponent implements OnInit {
         }
     }
 
-    saveCustomerInvoices(customerId: string) {
-        if (customerId === 'validate-only') {
-            const invoices = this.editableInvoices();
-            const invalidInvoices = invoices.filter(inv =>
-                !inv.invoice?.trim() || !inv.date || !inv.warehouse || !inv.currency || !inv.amount || inv.amount <= 0
-            );
-            if (invalidInvoices.length > 0) {
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Validation Error',
-                    detail: 'Please fill all required invoice fields (Invoice, Date, Warehouse, Currency, Amount > 0)'
-                });
-            }
-            const invoiceNumbers = invoices.map(inv => inv.invoice?.trim()).filter(Boolean);
-            const duplicates = invoiceNumbers.filter((inv, idx, arr) => arr.indexOf(inv) !== idx);
-            if (duplicates.length > 0) {
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Duplicate Invoice',
-                    detail: `Duplicate invoice number(s) found: ${[...new Set(duplicates)].join(', ')}`
-                });
-            }
-            return;
-        }
+    saveCustomerInvoices(customerId: string, onSuccess?: () => void) {
         const invoices = this.editableInvoices();
-        const invalidInvoices = invoices.filter(inv =>
-            !inv.invoice?.trim() || !inv.date || !inv.warehouse || !inv.currency || !inv.amount || inv.amount <= 0
-        );
-        const invoiceNumbers = invoices.map(inv => inv.invoice?.trim()).filter(Boolean);
-        const duplicates = invoiceNumbers.filter((inv, idx, arr) => arr.indexOf(inv) !== idx);
-        if (invalidInvoices.length > 0 || duplicates.length > 0) {
+
+        // No invoices to save — treat as success
+        if (invoices.length === 0) {
+            onSuccess?.();
             return;
         }
+
         const invoicesToSend = invoices.map(inv => ({
             id: inv.id || undefined,
             refNo: inv.invoice!.trim(),
@@ -500,33 +496,35 @@ export class CustomerComponent implements OnInit {
             salesmanId: '..default..............',
             opening: 1
         }));
+
         this.customerService.createCustomerInvoices(customerId, invoicesToSend).subscribe({
             next: () => {
-                if (this.customerDialog) {
-                    this.customerService.getCustomerInvoices(customerId).subscribe({
-                        next: (invoiceData) => {
-                            this.customerInvoices.set(invoiceData);
-                            const editable = invoiceData.map(inv => ({
-                                id: inv.id,
-                                invoice: inv.invoice,
-                                date: inv.date ? new Date(inv.date) : null,
-                                warehouse: inv.warehouse || null,
-                                currency: inv.currency || null,
-                                amount: inv.amount || null,
-                                remark: inv.remark || null,
-                                rem: inv.rem || null
-                            }));
-                            this.editableInvoices.set(editable);
-                        },
-                        error: () => {}
-                    });
-                }
+                // Reload invoices to refresh IDs from backend
+                this.customerService.getCustomerInvoices(customerId).subscribe({
+                    next: (invoiceData) => {
+                        this.customerInvoices.set(invoiceData);
+                        const editable = invoiceData.map(inv => ({
+                            id: inv.id,
+                            invoice: inv.invoice,
+                            date: inv.date ? new Date(inv.date) : null,
+                            warehouse: inv.warehouse || null,
+                            currency: inv.currency || null,
+                            amount: inv.amount || null,
+                            remark: inv.remark || null,
+                            rem: inv.rem || null
+                        }));
+                        this.editableInvoices.set(editable);
+                    },
+                    error: () => {}
+                });
+                onSuccess?.();
             },
             error: (error) => {
+                // Show error and keep dialog open — do NOT call onSuccess
                 this.messageService.add({
-                    severity: 'warn',
-                    summary: 'Warning',
-                    detail: 'Customer saved but some invoices may not have been saved: ' + (error.error?.message || 'Unknown error')
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: error.error?.message || 'Failed to save invoices',
                 });
             }
         });

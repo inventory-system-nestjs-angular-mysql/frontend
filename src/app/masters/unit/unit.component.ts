@@ -67,14 +67,7 @@ export class UnitComponent implements OnInit {
     loadUnits() {
         this.unitService.getUnits().subscribe({
             next: (data) => {
-                // Sort by serialNumber (null/undefined values go to the end)
-                const sorted = [...data].sort((a, b) => {
-                    if (!a.serialNumber && !b.serialNumber) return 0;
-                    if (!a.serialNumber) return 1;
-                    if (!b.serialNumber) return -1;
-                    return (a.serialNumber || '').localeCompare(b.serialNumber || '');
-                });
-                this.units.set(sorted);
+                this.units.set(data);
             },
             error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load Units' })
         });
