@@ -58,6 +58,7 @@ export interface OpeningBalanceDetailLine {
   qty: number;
   purchasePrice: number;
   amount: number;
+  onHand: number;
 }
 
 /**

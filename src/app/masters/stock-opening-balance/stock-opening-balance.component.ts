@@ -187,7 +187,7 @@ export class StockOpeningBalanceComponent implements OnInit {
             stockDetailId: l.stockDetailId,
             stockCode: l.stockCode,
             stockName: stockDetailMatch?.stockName ?? l.stockCode,
-            prevStock: 0,
+            prevStock: l.onHand ?? 0,
             qty: l.qty,
             unit: l.unit,
             unitDescription: this.getUnitDescription(l.unit) || l.unit,
@@ -229,22 +229,31 @@ export class StockOpeningBalanceComponent implements OnInit {
   addRowFromStockDetail(detail: StockDetailLookupModel): void {
     const price = detail.purchase ?? 0;
     const qty = 1;
-    this.lines.set([
-      ...this.lines(),
-      {
-        stockDetailId: detail.id,
-        stockCode: detail.stockCode ?? '',
-        stockName: detail.stockName ?? '',
-        prevStock: 0,
-        qty,
-        unit: detail.unit ?? '',
-        unitDescription: detail.unitDescription ?? null,
-        purchasePrice: price,
-        amount: qty * price,
-      },
-    ]);
+    const newRow: StockOpeningBalanceLineModel = {
+      stockDetailId: detail.id,
+      stockCode: detail.stockCode ?? '',
+      stockName: detail.stockName ?? '',
+      prevStock: 0,
+      qty,
+      unit: detail.unit ?? '',
+      unitDescription: detail.unitDescription ?? null,
+      purchasePrice: price,
+      amount: qty * price,
+    };
+    this.lines.set([...this.lines(), newRow]);
     this.stockLookupVisible = false;
     this.stockLookupTargetRowIndex = null;
+
+    if (detail.stockId) {
+      this.stockOpeningBalanceService.getOnHand(detail.stockId).subscribe({
+        next: (res) => {
+          const list = [...this.lines()];
+          const idx = list.length - 1;
+          list[idx] = { ...list[idx], prevStock: res.onHand ?? 0 };
+          this.lines.set(list);
+        },
+      });
+    }
   }
 
   openStockLookupForRow(index: number): void {
@@ -270,12 +279,23 @@ export class StockOpeningBalanceComponent implements OnInit {
         stockDetailId: detail.id,
         stockCode: detail.stockCode ?? '',
         stockName: detail.stockName ?? '',
+        prevStock: 0,
         unit: detail.unit ?? '',
         unitDescription: detail.unitDescription ?? null,
         purchasePrice: price,
         amount: qty * price,
       };
       this.lines.set(list);
+
+      if (detail.stockId) {
+        this.stockOpeningBalanceService.getOnHand(detail.stockId).subscribe({
+          next: (res) => {
+            const updated = [...this.lines()];
+            updated[idx] = { ...updated[idx], prevStock: res.onHand ?? 0 };
+            this.lines.set(updated);
+          },
+        });
+      }
     } else {
       this.addRowFromStockDetail(detail);
     }

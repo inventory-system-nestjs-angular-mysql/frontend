@@ -67,6 +67,8 @@ export class SupplierComponent implements OnInit {
     supplier: Partial<CreateSupplierModel & { id?: string }> = {};
     selectedSuppliers: SupplierResponseModel[] = [];
     submitted = false;
+    invoiceFirst = 0;
+    readonly invoicePageSize = 10;
     /** Base64 data URL for the current supplier image; loaded from backend by imagePath */
     supplierImageDataUrl: string | null = null;
     supplierInvoices = signal<CustomerInvoiceModel[]>([]);
@@ -149,6 +151,7 @@ export class SupplierComponent implements OnInit {
         this.supplierImageDataUrl = null;
         this.supplierInvoices.set([]);
         this.editableInvoices.set([]);
+        this.invoiceFirst = 0;
         this.submitted = false;
         this.supplierDialog = true;
     }
@@ -194,6 +197,7 @@ export class SupplierComponent implements OnInit {
         }
         this.supplierInvoices.set([]);
         this.editableInvoices.set([]);
+        this.invoiceFirst = 0;
         // Load invoices and bind after fetch
         this.supplierService.getSupplierInvoices(supplier.id).subscribe({
             next: (data) => {
@@ -240,6 +244,7 @@ export class SupplierComponent implements OnInit {
         this.supplierImageDataUrl = null;
         this.supplierInvoices.set([]);
         this.editableInvoices.set([]);
+        this.invoiceFirst = 0;
     }
 
     deleteSupplier(supplier: SupplierResponseModel) {
@@ -410,6 +415,8 @@ export class SupplierComponent implements OnInit {
             remark: null
         };
         this.editableInvoices.set([...this.editableInvoices(), newInvoice]);
+        const newTotal = this.editableInvoices().length;
+        this.invoiceFirst = Math.floor((newTotal - 1) / this.invoicePageSize) * this.invoicePageSize;
     }
 
     removeInvoiceRow(index: number) {
@@ -468,7 +475,7 @@ export class SupplierComponent implements OnInit {
             value: inv.amount!,
             remark: inv.remark ?? null,
             salesmanId: "..default..............",
-            opening: 1,
+            entityCode: this.supplier.code ?? null,
         }));
 
         this.supplierService.createSupplierInvoices(supplierId, invoicesToSend).subscribe({

@@ -34,4 +34,8 @@ export class StockOpeningBalanceService extends BaseApiService {
   ): Observable<StockOpeningBalanceResponse> {
     return this.patch<StockOpeningBalanceResponse>(`opening-balance/${id}`, body);
   }
+
+  getOnHand(stockId: string): Observable<{ onHand: number }> {
+    return this.get<{ onHand: number }>(`on-hand/${stockId}`);
+  }
 }

@@ -73,6 +73,8 @@ export class CustomerComponent implements OnInit {
     submitted = false;
     customerInvoices = signal<CustomerInvoiceModel[]>([]);
     editableInvoices = signal<EditableInvoiceModel[]>([]);
+    invoiceFirst = 0;
+    readonly invoicePageSize = 10;
     customerImageDataUrl: string | null = null;
     cols = [
         { field: 'code', header: 'Code' },
@@ -176,6 +178,7 @@ export class CustomerComponent implements OnInit {
         this.customerImageDataUrl = null;
         this.customerInvoices.set([]);
         this.editableInvoices.set([]);
+        this.invoiceFirst = 0;
         this.submitted = false;
         this.customerDialog = true;
     }
@@ -232,6 +235,7 @@ export class CustomerComponent implements OnInit {
         }
         this.customerInvoices.set([]);
         this.editableInvoices.set([]);
+        this.invoiceFirst = 0;
         this.customerService.getCustomerInvoices(customer.id).subscribe({
             next: (data) => {
                 this.customerInvoices.set(data);
@@ -277,6 +281,7 @@ export class CustomerComponent implements OnInit {
         this.customerImageDataUrl = null;
         this.customerInvoices.set([]);
         this.editableInvoices.set([]);
+        this.invoiceFirst = 0;
     }
 
     deleteCustomer(customer: CustomerResponseModel) {
@@ -447,6 +452,8 @@ export class CustomerComponent implements OnInit {
             remark: null
         };
         this.editableInvoices.set([...this.editableInvoices(), newInvoice]);
+        const newTotal = this.editableInvoices().length;
+        this.invoiceFirst = Math.floor((newTotal - 1) / this.invoicePageSize) * this.invoicePageSize;
     }
 
     removeInvoiceRow(index: number) {
@@ -494,7 +501,7 @@ export class CustomerComponent implements OnInit {
             value: inv.amount!,
             remark: inv.remark ?? null,
             salesmanId: '..default..............',
-            opening: 1
+            entityCode: this.customer.code ?? null,
         }));
 
         this.customerService.createCustomerInvoices(customerId, invoicesToSend).subscribe({
