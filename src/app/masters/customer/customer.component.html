@@ -277,6 +277,20 @@
                             </div>
                         </div>
 
+                        <!-- Salesman -->
+                        <div class="col-span-12">
+                            <label for="salesmanId" class="block font-bold mb-2">Salesman</label>
+                            <p-select
+                                [(ngModel)]="customer.salesmanId"
+                                [options]="salesmen()"
+                                optionLabel="name"
+                                optionValue="id"
+                                placeholder="Select Salesman"
+                                fluid
+                                [showClear]="true"
+                            />
+                        </div>
+
                         <!-- Image Path -->
                         <div class="col-span-12">
                             <label for="imagePath" class="block font-bold mb-2">Image</label>
