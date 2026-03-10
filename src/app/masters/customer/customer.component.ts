@@ -1,5 +1,7 @@
 import { Component, OnInit, signal, ViewChild } from '@angular/core';
 import { CustomerService } from './customer.service';
+import { SalesmanService } from '../salesman/salesman.service';
+import { SalesmanResponseModel } from '../../core/models/salesman';
 import { CityService } from '../city/city.service';
 import { WarehouseService } from '../warehouse/warehouse.service';
 import { WarehouseResponseModel } from '../../core/models/warehouse/warehouse-response.model';
@@ -68,6 +70,7 @@ export class CustomerComponent implements OnInit {
     cities = signal<CityResponseModel[]>([]);
     warehouses = signal<WarehouseResponseModel[]>([]);
     currencies = signal<CurrencyResponseModel[]>([]);
+    salesmen = signal<SalesmanResponseModel[]>([]);
     customer: Partial<CreateCustomerModel & { id?: string }> = {};
     selectedCustomers: CustomerResponseModel[] = [];
     submitted = false;
@@ -109,6 +112,7 @@ export class CustomerComponent implements OnInit {
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
         private customerService: CustomerService,
+        private salesmanService: SalesmanService,
         private cityService: CityService,
         private warehouseService: WarehouseService,
         private currencyService: CurrencyService,
@@ -121,6 +125,14 @@ export class CustomerComponent implements OnInit {
         this.loadCities();
         this.loadWarehouses();
         this.loadCurrencies();
+        this.loadSalesmen();
+    }
+
+    loadSalesmen() {
+        this.salesmanService.getSalesmen().subscribe({
+            next: (data) => this.salesmen.set(data),
+            error: () => console.error('Failed to load salesmen')
+        });
     }
 
     loadWarehouses() {
