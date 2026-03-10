@@ -367,6 +367,7 @@
                                     type="text"
                                     pInputText
                                     [(ngModel)]="invoice.invoice"
+                                    (input)="invoice.invoice = invoice.invoice?.toUpperCase()"
                                     (blur)="invoice.invoice = invoice.invoice?.trim()"
                                     class="w-full"
                                     placeholder="Invoice No."

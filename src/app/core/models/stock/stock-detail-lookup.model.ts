@@ -10,4 +10,5 @@ export interface StockDetailLookupModel {
   unit: string; // unit id
   unitDescription?: string;
   purchase: number;
+  purchaseX: number;
 }

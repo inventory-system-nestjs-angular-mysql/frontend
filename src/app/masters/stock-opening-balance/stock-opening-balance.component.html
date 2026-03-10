@@ -36,6 +36,7 @@
         pInputText
         id="refNo"
         [(ngModel)]="refNo"
+        (input)="refNo = refNo.toUpperCase()"
         (blur)="refNo = refNo.trim()"
         class="w-full"
         placeholder="Invoice No."
@@ -84,6 +85,7 @@
         fluid
         id="currency"
         [invalid]="submitted && !currencyId"
+        [disabled]="lines().length > 0"
       />
       <small class="text-red-500 block" *ngIf="submitted && !currencyId">Currency is required</small>
     </div>
@@ -132,6 +134,8 @@
               type="text"
               pInputText
               [(ngModel)]="line.stockCode"
+              (input)="line.stockCode = line.stockCode?.toUpperCase()"
+              (blur)="onStockCodeBlur(rowIndex)"
               class="flex-1"
               placeholder="Stock code (pick from list)"
               data-stock-code-input="true"
@@ -249,6 +253,7 @@
         <th style="min-width: 14rem">Stock Name</th>
         <th style="min-width: 6rem">Unit</th>
         <th style="min-width: 8rem">Purchase Price</th>
+        <th style="min-width: 8rem">USD Price</th>
         <th style="width: 8rem">Select</th>
       </tr>
     </ng-template>
@@ -258,6 +263,7 @@
         <td>{{ detail.stockName }}</td>
         <td>{{ getUnitDescription(detail.unit) }}</td>
         <td>{{ detail.purchase | number:'1.2-2' }}</td>
+        <td>{{ detail.purchaseX | number:'1.2-2' }}</td>
         <td>
           <p-button
             label="Select"
