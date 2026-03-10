@@ -38,4 +38,8 @@ export class StockOpeningBalanceService extends BaseApiService {
   getOnHand(stockId: string): Observable<{ onHand: number }> {
     return this.get<{ onHand: number }>(`on-hand/${stockId}`);
   }
+
+  deleteOpeningBalance(id: string): Observable<void> {
+    return this.delete<void>(`opening-balance/${id}`);
+  }
 }
