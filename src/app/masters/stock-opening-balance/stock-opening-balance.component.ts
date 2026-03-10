@@ -210,7 +210,20 @@ export class StockOpeningBalanceComponent implements OnInit {
     return this.lines().reduce((sum, row) => sum + (row.amount || 0), 0);
   }
 
+  private validateCurrencySelected(): boolean {
+    if (!this.currencyId?.trim()) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Currency Required',
+        detail: 'Please select a currency before adding stock codes.',
+      });
+      return false;
+    }
+    return true;
+  }
+
   addEmptyRow(): void {
+    if (!this.validateCurrencySelected()) return;
     this.lines.set([
       ...this.lines(),
       {
@@ -226,8 +239,18 @@ export class StockOpeningBalanceComponent implements OnInit {
     ]);
   }
 
+  private getStockPrice(detail: StockDetailLookupModel): number {
+    const currency = this.currencies().find((c) => c.id === this.currencyId);
+    
+    if(currency && currency.rate <= 0) {
+      return 0;
+    } 
+    
+    return (currency && currency.rate !== 1) ? (detail.purchaseX ?? 0) : (detail.purchase ?? 0);
+  }
+
   addRowFromStockDetail(detail: StockDetailLookupModel): void {
-    const price = detail.purchase ?? 0;
+    const price = this.getStockPrice(detail);
     const qty = 1;
     const newRow: StockOpeningBalanceLineModel = {
       stockDetailId: detail.id,
@@ -263,6 +286,7 @@ export class StockOpeningBalanceComponent implements OnInit {
   }
 
   openStockLookupToAdd(): void {
+    if (!this.validateCurrencySelected()) return;
     this.stockLookupTargetRowIndex = null;
     this.stockLookupSearch = '';
     this.stockLookupVisible = true;
@@ -272,7 +296,7 @@ export class StockOpeningBalanceComponent implements OnInit {
     if (this.stockLookupTargetRowIndex !== null) {
       const idx = this.stockLookupTargetRowIndex;
       const list = [...this.lines()];
-      const price = detail.purchase ?? 0;
+      const price = this.getStockPrice(detail);
       const qty = list[idx]?.qty || 1;
       list[idx] = {
         ...list[idx],
@@ -301,6 +325,51 @@ export class StockOpeningBalanceComponent implements OnInit {
     }
     this.stockLookupVisible = false;
     this.stockLookupTargetRowIndex = null;
+  }
+
+  onStockCodeBlur(index: number): void {
+    const list = [...this.lines()];
+    const line = list[index];
+    const code = line?.stockCode?.trim();
+    if (!code) return;
+
+    const detail = this.stockDetails().find(
+      (d) => d.stockCode?.toUpperCase() === code.toUpperCase()
+    );
+
+    if (!detail) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Not Found',
+        detail: `Stock code '${code}' not found`,
+      });
+      return;
+    }
+
+    const price = this.getStockPrice(detail);
+    const qty = line.qty || 1;
+    list[index] = {
+      ...list[index],
+      stockDetailId: detail.id,
+      stockCode: detail.stockCode ?? '',
+      stockName: detail.stockName ?? '',
+      prevStock: 0,
+      unit: detail.unit ?? '',
+      unitDescription: detail.unitDescription ?? null,
+      purchasePrice: price,
+      amount: qty * price,
+    };
+    this.lines.set(list);
+
+    if (detail.stockId) {
+      this.stockOpeningBalanceService.getOnHand(detail.stockId).subscribe({
+        next: (res) => {
+          const updated = [...this.lines()];
+          updated[index] = { ...updated[index], prevStock: res.onHand ?? 0 };
+          this.lines.set(updated);
+        },
+      });
+    }
   }
 
   @HostListener('document:keydown.f2', ['$event'])
