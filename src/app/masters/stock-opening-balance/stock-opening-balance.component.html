@@ -70,6 +70,7 @@
         fluid
         id="warehouse"
         [class.ng-invalid]="submitted && !warehouseId"
+        [disabled]="lines().length > 0"
       />
       <small class="text-red-500 block" *ngIf="submitted && !warehouseId">Warehouse is required</small>
     </div>
@@ -209,9 +210,18 @@
     <div class="flex items-center gap-4">
       <span class="font-bold text-lg">Total: {{ totalAmount | number:'1.2-2' }}</span>
       <p-button [label]="currentRecordId ? 'Update' : 'Save'" icon="pi pi-check" (onClick)="save()" />
+      <p-button
+        *ngIf="currentRecordId"
+        label="Delete"
+        icon="pi pi-trash"
+        severity="danger"
+        (onClick)="deleteRecord()"
+      />
     </div>
   </div>
 </div>
+
+<p-confirmdialog />
 
 <!-- Stock detail lookup dialog (F2) -->
 <p-dialog

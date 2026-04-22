@@ -16,7 +16,7 @@ import {
   CreateStockOpeningBalanceRequest,
 } from '../../core/models/stock-opening-balance.model';
 import { DateUtil } from '../../core/utils/date.util';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -28,6 +28,7 @@ import { InputIconModule } from 'primeng/inputicon';
 import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 @Component({
   selector: 'app-stock-opening-balance',
@@ -46,9 +47,10 @@ import { TooltipModule } from 'primeng/tooltip';
     DatePickerModule,
     SelectModule,
     TooltipModule,
+    ConfirmDialogModule,
   ],
   templateUrl: './stock-opening-balance.component.html',
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService],
 })
 export class StockOpeningBalanceComponent implements OnInit {
   refNo = '';
@@ -75,6 +77,7 @@ export class StockOpeningBalanceComponent implements OnInit {
 
   constructor(
     private messageService: MessageService,
+    private confirmationService: ConfirmationService,
     private stockOpeningBalanceService: StockOpeningBalanceService,
     private warehouseService: WarehouseService,
     private stockService: StockService,
@@ -267,8 +270,8 @@ export class StockOpeningBalanceComponent implements OnInit {
     this.stockLookupVisible = false;
     this.stockLookupTargetRowIndex = null;
 
-    if (detail.stockId) {
-      this.stockOpeningBalanceService.getOnHand(detail.stockId).subscribe({
+    if (detail.stockId && this.warehouseId) {
+      this.stockOpeningBalanceService.getOnHand(detail.stockId, this.warehouseId).subscribe({
         next: (res) => {
           const list = [...this.lines()];
           const idx = list.length - 1;
@@ -311,8 +314,8 @@ export class StockOpeningBalanceComponent implements OnInit {
       };
       this.lines.set(list);
 
-      if (detail.stockId) {
-        this.stockOpeningBalanceService.getOnHand(detail.stockId).subscribe({
+      if (detail.stockId && this.warehouseId) {
+        this.stockOpeningBalanceService.getOnHand(detail.stockId, this.warehouseId).subscribe({
           next: (res) => {
             const updated = [...this.lines()];
             updated[idx] = { ...updated[idx], prevStock: res.onHand ?? 0 };
@@ -361,8 +364,8 @@ export class StockOpeningBalanceComponent implements OnInit {
     };
     this.lines.set(list);
 
-    if (detail.stockId) {
-      this.stockOpeningBalanceService.getOnHand(detail.stockId).subscribe({
+    if (detail.stockId && this.warehouseId) {
+      this.stockOpeningBalanceService.getOnHand(detail.stockId, this.warehouseId).subscribe({
         next: (res) => {
           const updated = [...this.lines()];
           updated[index] = { ...updated[index], prevStock: res.onHand ?? 0 };
@@ -487,6 +490,33 @@ export class StockOpeningBalanceComponent implements OnInit {
           summary: 'Error',
           detail: err.error?.message ?? 'Failed to save Stock Opening Balance',
         }),
+    });
+  }
+
+  deleteRecord(): void {
+    if (!this.currentRecordId) return;
+    this.confirmationService.confirm({
+      message: 'Are you sure you want to delete this opening balance record? This will also delete all its stock lines.',
+      header: 'Confirm Delete',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        this.stockOpeningBalanceService.deleteOpeningBalance(this.currentRecordId!).subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Deleted',
+              detail: 'Opening balance record deleted successfully.',
+            });
+            this.resetForm();
+          },
+          error: (err) =>
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: err.error?.message ?? 'Failed to delete record.',
+            }),
+        });
+      },
     });
   }
 

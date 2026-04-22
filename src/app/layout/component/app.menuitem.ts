@@ -67,7 +67,6 @@ import { LayoutService } from '../service/layout.service';
             transition('collapsed <=> expanded', animate('400ms cubic-bezier(0.86, 0, 0.07, 1)'))
         ])
     ],
-    providers: [LayoutService]
 })
 export class AppMenuitem {
     @Input() item!: MenuItem;
@@ -106,7 +105,7 @@ export class AppMenuitem {
             this.active = false;
         });
 
-        this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((params) => {
+        this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
             if (this.item.routerLink) {
                 this.updateActiveStateFromRoute();
             }
@@ -149,8 +148,21 @@ export class AppMenuitem {
         this.layoutService.onMenuStateChange({ key: this.key });
     }
 
+    private hasActiveChild(items: MenuItem[]): boolean {
+        return items.some((child) => {
+            if (child.routerLink) {
+                const link = Array.isArray(child.routerLink) ? child.routerLink[0] : child.routerLink;
+                return this.router.isActive(link as string, { paths: 'exact', queryParams: 'ignored', matrixParams: 'ignored', fragment: 'ignored' });
+            }
+            return child.items ? this.hasActiveChild(child.items as MenuItem[]) : false;
+        });
+    }
+
     get submenuAnimation() {
-        return this.root ? 'expanded' : this.active ? 'expanded' : 'collapsed';
+        if (this.root) return 'expanded';
+        if (this.active) return 'expanded';
+        if (this.item.items?.length && this.hasActiveChild(this.item.items as MenuItem[])) return 'expanded';
+        return 'collapsed';
     }
 
     @HostBinding('class.active-menuitem')
