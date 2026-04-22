@@ -70,6 +70,7 @@
         fluid
         id="warehouse"
         [class.ng-invalid]="submitted && !warehouseId"
+        [disabled]="lines().length > 0"
       />
       <small class="text-red-500 block" *ngIf="submitted && !warehouseId">Warehouse is required</small>
     </div>

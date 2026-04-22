@@ -57,6 +57,10 @@ export const API_ENDPOINTS = {
   CURRENCIES: '/currencies',
   CURRENCY_BY_ID: (id: string) => `/currencies/${id}`,
 
+  // Purchasing endpoints
+  PURCHASING: '/purchasing',
+  PURCHASING_BY_ID: (id: string) => `/purchasing/${id}`,
+
   // Upload endpoints
   UPLOAD_IMAGE: '/upload/image',
 } as const;

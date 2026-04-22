@@ -1,0 +1,483 @@
+<p-toast />
+<p-confirmdialog [style]="{ width: '450px' }" />
+
+<!-- Toolbar -->
+<p-toolbar styleClass="mb-6">
+    <ng-template #start>
+        <p-button label="New" icon="pi pi-plus" severity="secondary" (onClick)="openNew()" />
+    </ng-template>
+</p-toolbar>
+
+<!-- List Table -->
+<p-table
+    [value]="purchasingList()"
+    [rows]="15"
+    [paginator]="true"
+    [rowsPerPageOptions]="[15, 30, 50]"
+    [globalFilterFields]="['invoiceNo', 'supplierName', 'warehouseName']"
+    [tableStyle]="{ 'min-width': '60rem' }"
+    [rowHover]="true"
+    dataKey="id"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
+    [showCurrentPageReport]="true"
+    styleClass="p-datatable-striped"
+>
+    <ng-template #caption>
+        <div class="flex items-center justify-between">
+            <h5 class="m-0">Purchasing</h5>
+            <p-iconfield>
+                <p-inputicon styleClass="pi pi-search" />
+                <input pInputText type="text" [(ngModel)]="listSearch" placeholder="Search..." />
+            </p-iconfield>
+        </div>
+    </ng-template>
+    <ng-template #header>
+        <tr>
+            <th style="min-width: 10rem">Invoice No</th>
+            <th style="min-width: 12rem">Supplier</th>
+            <th style="min-width: 10rem">Warehouse</th>
+            <th style="min-width: 8rem">Currency</th>
+            <th style="min-width: 9rem">Date</th>
+            <th style="min-width: 9rem">Due Date</th>
+            <th style="min-width: 10rem; text-align: right">Total Amount</th>
+            <th style="min-width: 8rem"></th>
+        </tr>
+    </ng-template>
+    <ng-template #body let-record>
+        <tr>
+            <td>{{ record.invoiceNo || '-' }}</td>
+            <td>{{ record.supplierName || '-' }}</td>
+            <td>{{ record.warehouseName || '-' }}</td>
+            <td>{{ record.currencyName || '-' }}</td>
+            <td>{{ record.date | date:'dd-MM-yyyy' }}</td>
+            <td>{{ record.dueDate | date:'dd-MM-yyyy' }}</td>
+            <td style="text-align: right">{{ record.totalAmount | number:'1.2-2' }}</td>
+            <td>
+                <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true" (click)="editRecord(record)" />
+                <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true" (click)="deleteRecord(record)" />
+            </td>
+        </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+        <tr>
+            <td colspan="8" class="text-center py-8 text-muted-color">
+                <i class="pi pi-inbox text-4xl mb-2 block"></i>
+                No purchasing records found.
+            </td>
+        </tr>
+    </ng-template>
+</p-table>
+
+<!-- Edit Dialog -->
+<p-dialog
+    [(visible)]="dialogVisible"
+    [style]="{ width: '80vw', maxWidth: '1400px' }"
+    [modal]="true"
+    [closable]="true"
+    [draggable]="false"
+    [resizable]="true"
+    [header]="isNew ? 'New Purchasing Invoice' : 'Edit Purchasing Invoice'"
+>
+    <ng-template #content>
+        <!-- Header Fields -->
+        <div class="grid grid-cols-12 gap-4 mt-2">
+            <!-- Invoice No -->
+            <div class="col-span-12 md:col-span-2">
+                <label class="block font-bold mb-2">Invoice No <span class="text-red-500">*</span></label>
+                <input
+                    type="text"
+                    pInputText
+                    [(ngModel)]="invoiceNo"
+                    (input)="invoiceNo = invoiceNo.toUpperCase()"
+                    fluid
+                    placeholder="Invoice No."
+                    [disabled]="headerLocked"
+                />
+                <small class="text-red-500" *ngIf="submitted && !invoiceNo.trim()">Required.</small>
+                <small class="text-red-500" *ngIf="!submitted && isDuplicateInvoiceNo">Duplicate invoice no.</small>
+            </div>
+
+                        <!-- Warehouse -->
+            <div class="col-span-12 md:col-span-2">
+                <label class="block font-bold mb-2">Warehouse <span class="text-red-500">*</span></label>
+                <p-select
+                    [(ngModel)]="warehouseId"
+                    [options]="warehouses()"
+                    optionLabel="description"
+                    optionValue="id"
+                    placeholder="Select Warehouse"
+                    fluid
+                    [showClear]="true"
+                    [disabled]="headerLocked"
+                />
+                <small class="text-red-500" *ngIf="submitted && !warehouseId">Required.</small>
+            </div>
+            <!-- Date -->
+            <div class="col-span-12 md:col-span-2">
+                <label class="block font-bold mb-2">Date <span class="text-red-500">*</span></label>
+                <p-datepicker [(ngModel)]="date" [showIcon]="true" dateFormat="dd-mm-yy" fluid [disabled]="headerLocked" />
+                <small class="text-red-500" *ngIf="submitted && !date">Required.</small>
+            </div>
+
+            <!-- Due Date -->
+            <div class="col-span-12 md:col-span-2">
+                <label class="block font-bold mb-2">Due Date <span class="text-red-500">*</span></label>
+                <p-datepicker [(ngModel)]="dueDate" [showIcon]="true" dateFormat="dd-mm-yy" fluid [showClear]="true" [disabled]="headerLocked" />
+                <small class="text-red-500" *ngIf="submitted && !dueDate">Required.</small>
+            </div>
+
+            <!-- Currency -->
+            <div class="col-span-12 md:col-span-2">
+                <label class="block font-bold mb-2">Currency <span class="text-red-500">*</span></label>
+                <p-select
+                    [(ngModel)]="currencyId"
+                    [options]="currencies()"
+                    optionLabel="currency"
+                    optionValue="id"
+                    placeholder="Select Currency"
+                    fluid
+                    [showClear]="true"
+                    [disabled]="headerLocked"
+                />
+                <small class="text-red-500" *ngIf="submitted && !currencyId">Required.</small>
+            </div>
+
+            <!-- Cash -->
+            <div class="col-span-12 md:col-span-2 flex items-end pb-2">
+                <p-checkbox [(ngModel)]="isCash" binary inputId="isCash" />
+                <label for="isCash" class="ml-2 cursor-pointer font-bold">Cash</label>
+            </div>
+
+            <!-- Supplier -->
+            <div class="col-span-12 md:col-span-2">
+                <label class="block font-bold mb-2">Supplier <span class="text-red-500">*</span></label>
+                <p-select
+                    [(ngModel)]="supplierId"
+                    [options]="suppliers()"
+                    optionLabel="name"
+                    optionValue="id"
+                    placeholder="Select Supplier"
+                    fluid
+                    [showClear]="true"
+                    [filter]="true"
+                    filterBy="name,code"
+                    [disabled]="headerLocked"
+                />
+                <small class="text-red-500" *ngIf="submitted && !supplierId">Required.</small>
+            </div>
+
+            <!-- Disc% 1 -->
+            <div class="col-span-6 md:col-span-1">
+                <label class="block font-bold mb-2">Disc %</label>
+                <p-inputnumber [(ngModel)]="discount1" mode="decimal" [min]="0" [max]="100" [maxFractionDigits]="2" fluid />
+            </div>
+
+            <!-- Disc% 2 -->
+            <div class="col-span-6 md:col-span-1">
+                <label class="block font-bold mb-2">Disc %</label>
+                <p-inputnumber [(ngModel)]="discount2" mode="decimal" [min]="0" [max]="100" [maxFractionDigits]="2" fluid />
+            </div>
+
+            <!-- Disc% 3 -->
+            <div class="col-span-6 md:col-span-1">
+                <label class="block font-bold mb-2">Disc %</label>
+                <p-inputnumber [(ngModel)]="discount3" mode="decimal" [min]="0" [max]="100" [maxFractionDigits]="2" fluid />
+            </div>
+
+            <!-- Disc flat -->
+            <div class="col-span-6 md:col-span-1">
+                <label class="block font-bold mb-2">Disc</label>
+                <p-inputnumber [(ngModel)]="discount" mode="decimal" [min]="0" [useGrouping]="true" [maxFractionDigits]="2" fluid
+                    (ngModelChange)="recomputeAllLineAmounts()" />
+            </div>
+
+            <!-- Freight % -->
+            <div class="col-span-6 md:col-span-1">
+                <label class="block font-bold mb-2">Freight %</label>
+                <p-inputnumber [(ngModel)]="freightPct" mode="decimal" [min]="0" [max]="100" [maxFractionDigits]="2" fluid />
+            </div>
+
+            <!-- Freight Amount -->
+            <div class="col-span-6 md:col-span-1">
+                <label class="block font-bold mb-2">Freight</label>
+                <p-inputnumber [(ngModel)]="freight" mode="decimal" [min]="0" [useGrouping]="true" [maxFractionDigits]="2" fluid />
+            </div>
+
+            <!-- Tax % -->
+            <div class="col-span-6 md:col-span-2">
+                <label class="block font-bold mb-2">Tax %</label>
+                <p-inputnumber [(ngModel)]="tax" mode="decimal" [min]="0" [max]="100" [maxFractionDigits]="2" fluid
+                    (ngModelChange)="recomputeAllLineAmounts()" />
+            </div>
+
+            <!-- PO No -->
+            <div class="col-span-12 md:col-span-3">
+                <label class="block font-bold mb-2">PO No</label>
+                <input type="text" pInputText [(ngModel)]="po" (input)="po = po.toUpperCase()" fluid />
+            </div>
+
+            <!-- DO No -->
+            <div class="col-span-12 md:col-span-3">
+                <label class="block font-bold mb-2">DO No.</label>
+                <input type="text" pInputText [(ngModel)]="sj" (input)="sj = sj.toUpperCase()" fluid />
+            </div>
+
+            <!-- DO Date -->
+            <div class="col-span-12 md:col-span-3">
+                <label class="block font-bold mb-2">DO Date</label>
+                <p-datepicker [(ngModel)]="tglSj" [showIcon]="true" dateFormat="dd-mm-yy" fluid [showClear]="true" />
+            </div>
+
+            <!-- Paid -->
+            <div class="col-span-12 md:col-span-3 flex items-end pb-2">
+                <p-checkbox [(ngModel)]="isPaid" binary inputId="isPaid" />
+                <label for="isPaid" class="ml-2 cursor-pointer font-bold">Paid</label>
+            </div>
+
+            <!-- Tax Invoice -->
+            <div class="col-span-12 md:col-span-3">
+                <label class="block font-bold mb-2">Tax Invoice</label>
+                <input type="text" pInputText [(ngModel)]="taxInvoice" fluid />
+            </div>
+
+            <!-- Remarks -->
+            <div class="col-span-12 md:col-span-12">
+                <label class="block font-bold mb-2">Remarks</label>
+                <input type="text" pInputText [(ngModel)]="remark" fluid />
+            </div>
+
+            <!-- Scan 1 -->
+            <div class="col-span-6 md:col-span-3">
+                <label class="block font-bold mb-2">1</label>
+                <input type="text" pInputText [(ngModel)]="scan1" fluid />
+            </div>
+
+            <!-- Scan 2 -->
+            <div class="col-span-6 md:col-span-3">
+                <label class="block font-bold mb-2">2</label>
+                <input type="text" pInputText [(ngModel)]="scan2" fluid />
+            </div>
+
+            <!-- Scan 3 -->
+            <div class="col-span-6 md:col-span-3">
+                <label class="block font-bold mb-2">3</label>
+                <input type="text" pInputText [(ngModel)]="scan3" fluid />
+            </div>
+
+            <!-- Scan 4 -->
+            <div class="col-span-6 md:col-span-3">
+                <label class="block font-bold mb-2">4</label>
+                <input type="text" pInputText [(ngModel)]="scan4" fluid />
+            </div>
+        </div>
+
+        <p-divider />
+
+        <!-- Detail Lines -->
+        <div class="mb-3 flex gap-2">
+            <p-button label="Add Row" icon="pi pi-plus" severity="secondary" (onClick)="addEmptyRow()" />
+            <p-button label="Add from list" icon="pi pi-list" severity="secondary" outlined (onClick)="openStockLookupToAdd()" pTooltip="Select stock code" />
+        </div>
+
+        <p-table
+            [value]="lines()"
+            [tableStyle]="{ 'min-width': '90rem' }"
+            styleClass="p-datatable-gridlines p-datatable-sm"
+            scrollable
+            scrollHeight="320px"
+        >
+            <ng-template #header>
+                <tr>
+                    <th style="min-width: 12rem">Stock Code</th>
+                    <th style="min-width: 14rem">Stock Name</th>
+                    <th style="min-width: 6rem; text-align: right">Prev. Stock</th>
+                    <th style="min-width: 7rem">Qty</th>
+                    <th style="min-width: 8rem">Unit</th>
+                    <th style="min-width: 9rem">Price</th>
+                    <th style="min-width: 6rem">Disc %</th>
+                    <th style="min-width: 6rem">Disc %</th>
+                    <th style="min-width: 6rem">Disc %</th>
+                    <th style="min-width: 8rem">Disc</th>
+                    <th style="min-width: 4rem; text-align: center">Tax</th>
+                    <th style="min-width: 9rem; text-align: right">Amount</th>
+                    <th style="width: 5rem"></th>
+                </tr>
+            </ng-template>
+            <ng-template #body let-line let-rowIndex="rowIndex">
+                <tr>
+                    <td>
+                        <div class="flex align-items-center gap-1">
+                            <input
+                                type="text"
+                                pInputText
+                                [(ngModel)]="line.stockCode"
+                                (input)="line.stockCode = line.stockCode?.toUpperCase()"
+                                (blur)="onStockCodeBlur(rowIndex)"
+                                class="flex-1"
+                                placeholder="Stock code"
+                            />
+                            <p-button
+                                icon="pi pi-list"
+                                [rounded]="true"
+                                [outlined]="true"
+                                size="small"
+                                pTooltip="Pick stock"
+                                (onClick)="openStockLookupForRow(rowIndex)"
+                            />
+                        </div>
+                    </td>
+                    <td>{{ line.stockName || '-' }}</td>
+                    <td class="text-right">
+                        <span>{{ line.onHand | number:'1.0-3' }}</span>
+                    </td>
+                    <td>
+                        <p-inputnumber
+                            [(ngModel)]="line.qty"
+                            mode="decimal"
+                            [min]="0"
+                            [maxFractionDigits]="3"
+                            [useGrouping]="false"
+                            (ngModelChange)="computeLineAmount(line)"
+                            fluid
+                        />
+                    </td>
+                    <td>{{ line.unit || '-' }}</td>
+                    <td>
+                        <p-inputnumber
+                            [(ngModel)]="line.price"
+                            mode="decimal"
+                            [min]="0"
+                            [useGrouping]="true"
+                            [minFractionDigits]="2"
+                            [maxFractionDigits]="2"
+                            (ngModelChange)="computeLineAmount(line)"
+                            fluid
+                        />
+                    </td>
+                    <td>
+                        <p-inputnumber
+                            [(ngModel)]="line.disc1"
+                            mode="decimal"
+                            [min]="0" [max]="100"
+                            [maxFractionDigits]="2"
+                            (ngModelChange)="computeLineAmount(line)"
+                            fluid
+                        />
+                    </td>
+                    <td>
+                        <p-inputnumber
+                            [(ngModel)]="line.disc2"
+                            mode="decimal"
+                            [min]="0" [max]="100"
+                            [maxFractionDigits]="2"
+                            (ngModelChange)="computeLineAmount(line)"
+                            fluid
+                        />
+                    </td>
+                    <td>
+                        <p-inputnumber
+                            [(ngModel)]="line.disc3"
+                            mode="decimal"
+                            [min]="0" [max]="100"
+                            [maxFractionDigits]="2"
+                            (ngModelChange)="computeLineAmount(line)"
+                            fluid
+                        />
+                    </td>
+                    <td>
+                        <p-inputnumber
+                            [(ngModel)]="line.disc"
+                            mode="decimal"
+                            [min]="0"
+                            [useGrouping]="true"
+                            [maxFractionDigits]="2"
+                            (ngModelChange)="computeLineAmount(line)"
+                            fluid
+                        />
+                    </td>
+                    <td style="text-align: center">
+                        <p-checkbox
+                            [(ngModel)]="line.taxable"
+                            binary
+                            (ngModelChange)="computeLineAmount(line)"
+                        />
+                    </td>
+                    <td class="text-right">
+                        <span class="font-semibold">{{ line.amount | number:'1.2-2' }}</span>
+                    </td>
+                    <td>
+                        <p-button
+                            icon="pi pi-trash"
+                            severity="danger"
+                            [rounded]="true"
+                            [outlined]="true"
+                            size="small"
+                            (onClick)="removeRow(rowIndex)"
+                        />
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template #emptymessage>
+                <tr>
+                    <td colspan="13" class="text-center py-6 text-muted-color">
+                        No lines. Click "Add Row" or "Add from list" to add items.
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template #footer>
+                <tr>
+                    <td colspan="11" class="text-right font-bold">Total:</td>
+                    <td class="text-right font-bold">{{ totalAmount | number:'1.2-2' }}</td>
+                    <td></td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </ng-template>
+
+    <ng-template #footer>
+        <div class="flex justify-end gap-2">
+            <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
+            <p-button label="Save" icon="pi pi-check" (click)="saveRecord()" />
+        </div>
+    </ng-template>
+</p-dialog>
+
+<!-- Stock Lookup Dialog -->
+<p-dialog
+    [(visible)]="stockLookupVisible"
+    [style]="{ width: '700px' }"
+    header="Select Stock"
+    [modal]="true"
+    [draggable]="false"
+>
+    <ng-template #content>
+        <p-iconfield class="mb-3 block">
+            <p-inputicon styleClass="pi pi-search" />
+            <input pInputText type="text" [(ngModel)]="stockLookupSearch" placeholder="Search code or name..." fluid />
+        </p-iconfield>
+        <p-table
+            [value]="filteredStockDetails"
+            [scrollable]="true"
+            scrollHeight="350px"
+            [rowHover]="true"
+            styleClass="p-datatable-sm p-datatable-striped"
+        >
+            <ng-template #header>
+                <tr>
+                    <th>Code</th>
+                    <th>Stock Name</th>
+                    <th>Unit</th>
+                    <th style="text-align: right">Purchase Price</th>
+                </tr>
+            </ng-template>
+            <ng-template #body let-detail>
+                <tr style="cursor:pointer" (click)="onSelectStock(detail)">
+                    <td>{{ detail.stockCode }}</td>
+                    <td>{{ detail.stockName }}</td>
+                    <td>{{ getUnitDescription(detail.unit) }}</td>
+                    <td style="text-align: right">{{ detail.purchase | number:'1.2-2' }}</td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </ng-template>
+</p-dialog>
