@@ -270,8 +270,8 @@ export class StockOpeningBalanceComponent implements OnInit {
     this.stockLookupVisible = false;
     this.stockLookupTargetRowIndex = null;
 
-    if (detail.stockId) {
-      this.stockOpeningBalanceService.getOnHand(detail.stockId).subscribe({
+    if (detail.stockId && this.warehouseId) {
+      this.stockOpeningBalanceService.getOnHand(detail.stockId, this.warehouseId).subscribe({
         next: (res) => {
           const list = [...this.lines()];
           const idx = list.length - 1;
@@ -314,8 +314,8 @@ export class StockOpeningBalanceComponent implements OnInit {
       };
       this.lines.set(list);
 
-      if (detail.stockId) {
-        this.stockOpeningBalanceService.getOnHand(detail.stockId).subscribe({
+      if (detail.stockId && this.warehouseId) {
+        this.stockOpeningBalanceService.getOnHand(detail.stockId, this.warehouseId).subscribe({
           next: (res) => {
             const updated = [...this.lines()];
             updated[idx] = { ...updated[idx], prevStock: res.onHand ?? 0 };
@@ -364,8 +364,8 @@ export class StockOpeningBalanceComponent implements OnInit {
     };
     this.lines.set(list);
 
-    if (detail.stockId) {
-      this.stockOpeningBalanceService.getOnHand(detail.stockId).subscribe({
+    if (detail.stockId && this.warehouseId) {
+      this.stockOpeningBalanceService.getOnHand(detail.stockId, this.warehouseId).subscribe({
         next: (res) => {
           const updated = [...this.lines()];
           updated[index] = { ...updated[index], prevStock: res.onHand ?? 0 };
