@@ -17,6 +17,7 @@ import { SalesmanComponent } from './masters/salesman/salesman.component';
 import { CurrencyComponent } from './masters/currency/currency.component';
 import { StockOpeningBalanceComponent } from './masters/stock-opening-balance/stock-opening-balance.component';
 import { PurchasingComponent } from './transactions/purchasing/purchasing.component';
+import { PurchaseReturnComponent } from './transactions/purchase-return/purchase-return.component';
 import { Login } from './pages/auth/login';
 
 export const routes: Routes = [
@@ -39,6 +40,7 @@ export const routes: Routes = [
             { path: 'masters/currency', component: CurrencyComponent },
             { path: 'masters/stock-opening-balance', component: StockOpeningBalanceComponent },
             { path: 'transactions/purchasing', component: PurchasingComponent },
+            { path: 'transactions/purchase-return', component: PurchaseReturnComponent },
             { path: 'uikit', loadChildren: () => import('./pages/uikit/uikit.routes') },
             { path: 'documentation', component: Documentation },
             { path: 'pages', loadChildren: () => import('./pages/pages.routes') }

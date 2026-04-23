@@ -61,6 +61,11 @@ export const API_ENDPOINTS = {
   PURCHASING: '/purchasing',
   PURCHASING_BY_ID: (id: string) => `/purchasing/${id}`,
 
+  // Purchase Return endpoints
+  PURCHASE_RETURN: '/purchase-return',
+  PURCHASE_RETURN_BY_ID: (id: string) => `/purchase-return/${id}`,
+  PURCHASE_RETURN_OUTSTANDING: '/purchase-return/outstanding-invoices',
+
   // Upload endpoints
   UPLOAD_IMAGE: '/upload/image',
 } as const;
