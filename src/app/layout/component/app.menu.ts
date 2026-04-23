@@ -103,6 +103,11 @@ export class AppMenu {
                                 icon: 'pi pi-fw pi-shopping-cart',
                                 routerLink: ['/app/transactions/purchasing']
                             },
+                            {
+                                label: 'Purchase Return',
+                                icon: 'pi pi-fw pi-replay',
+                                routerLink: ['/app/transactions/purchase-return']
+                            },
                         ]
                     },
                     {
