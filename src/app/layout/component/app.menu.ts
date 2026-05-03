@@ -108,6 +108,11 @@ export class AppMenu {
                                 icon: 'pi pi-fw pi-replay',
                                 routerLink: ['/app/transactions/purchase-return']
                             },
+                            {
+                                label: 'Goods Transfer',
+                                icon: 'pi pi-fw pi-arrows-h',
+                                routerLink: ['/app/transactions/goods-transfer']
+                            },
                         ]
                     },
                     {

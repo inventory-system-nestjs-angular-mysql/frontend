@@ -61,6 +61,10 @@ export const API_ENDPOINTS = {
   PURCHASING: '/purchasing',
   PURCHASING_BY_ID: (id: string) => `/purchasing/${id}`,
 
+  // Goods Transfer endpoints
+  GOODS_TRANSFER: '/goods-transfer',
+  GOODS_TRANSFER_BY_ID: (id: string) => `/goods-transfer/${id}`,
+
   // Purchase Return endpoints
   PURCHASE_RETURN: '/purchase-return',
   PURCHASE_RETURN_BY_ID: (id: string) => `/purchase-return/${id}`,
