@@ -70,6 +70,14 @@ export const API_ENDPOINTS = {
   PURCHASE_RETURN_BY_ID: (id: string) => `/purchase-return/${id}`,
   PURCHASE_RETURN_OUTSTANDING: '/purchase-return/outstanding-invoices',
 
+  // Supplier Payment endpoints
+  SUPPLIER_PAYMENT: '/supplier-payment',
+  SUPPLIER_PAYMENT_BY_ID: (id: string) => `/supplier-payment/${id}`,
+  SUPPLIER_PAYMENT_OUTSTANDING: '/supplier-payment/outstanding-invoices',
+  SUPPLIER_PAYMENT_NEXT_NO: '/supplier-payment/next-invoice-no',
+  SUPPLIER_PAYMENT_SEARCH_BY_INVOICE: '/supplier-payment/search-by-invoice',
+  SUPPLIER_PAYMENT_SEARCH_SUPPLIER: '/supplier-payment/search-supplier',
+
   // Upload endpoints
   UPLOAD_IMAGE: '/upload/image',
 } as const;

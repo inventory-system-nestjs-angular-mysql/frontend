@@ -1,0 +1,391 @@
+<p-toast />
+<p-confirmdialog [style]="{ width: '450px' }" />
+
+<!-- Toolbar -->
+<p-toolbar styleClass="mb-6">
+    <ng-template #start>
+        <p-button label="New" icon="pi pi-plus" severity="secondary" (onClick)="openNew()" />
+    </ng-template>
+</p-toolbar>
+
+<!-- List Table -->
+<p-table
+    [value]="paymentList()"
+    [rows]="15"
+    [paginator]="true"
+    [rowsPerPageOptions]="[15, 30, 50]"
+    [globalFilterFields]="['invoiceNo', 'supplierName', 'currencyName']"
+    [tableStyle]="{ 'min-width': '60rem' }"
+    [rowHover]="true"
+    dataKey="id"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
+    [showCurrentPageReport]="true"
+    styleClass="p-datatable-striped"
+>
+    <ng-template #caption>
+        <div class="flex items-center justify-between">
+            <h5 class="m-0">Supplier Payment</h5>
+            <p-iconfield>
+                <p-inputicon styleClass="pi pi-search" />
+                <input pInputText type="text" [(ngModel)]="listSearch" placeholder="Search..." />
+            </p-iconfield>
+        </div>
+    </ng-template>
+    <ng-template #header>
+        <tr>
+            <th style="min-width: 10rem">Payment No</th>
+            <th style="min-width: 9rem">Date</th>
+            <th style="min-width: 14rem">Supplier</th>
+            <th style="min-width: 8rem">Currency</th>
+            <th style="min-width: 10rem; text-align: right">Total Paid</th>
+            <th style="min-width: 8rem"></th>
+        </tr>
+    </ng-template>
+    <ng-template #body let-rec>
+        <tr>
+            <td>{{ rec.invoiceNo || '-' }}</td>
+            <td>{{ rec.date | date:'dd-MM-yyyy' }}</td>
+            <td>{{ rec.supplierName || '-' }}</td>
+            <td>{{ rec.currencyName || '-' }}</td>
+            <td style="text-align: right">{{ rec.totalPaid | number:'1.2-2' }}</td>
+            <td>
+                <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true" (click)="editRecord(rec)" />
+                <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true" (click)="deleteRecord(rec)" />
+            </td>
+        </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+        <tr>
+            <td colspan="6" class="text-center py-8 text-muted-color">
+                <i class="pi pi-inbox text-4xl mb-2 block"></i>
+                No supplier payment records found.
+            </td>
+        </tr>
+    </ng-template>
+</p-table>
+
+<!-- Edit Dialog -->
+<p-dialog
+    [(visible)]="dialogVisible"
+    [header]="isNew ? 'New Supplier Payment' : 'Edit Supplier Payment'"
+    [modal]="true"
+    [style]="{ width: '96vw', maxWidth: '1300px' }"
+    [closable]="true"
+    [draggable]="false"
+    [resizable]="true"
+    (onHide)="hideDialog()"
+>
+<ng-template #content>
+  <div class="flex flex-col gap-4">
+
+    <!-- Header row -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+      <!-- LEFT: basic info -->
+      <div class="flex flex-col gap-3">
+        <div class="flex items-center gap-2">
+          <label class="w-28 text-sm font-medium shrink-0">Payment No</label>
+          <input pInputText [(ngModel)]="invoiceNo"
+            (input)="invoiceNo = invoiceNo.toUpperCase()"
+            class="flex-1 font-mono"
+            [class.p-invalid]="submitted && !invoiceNo.trim()" />
+        </div>
+
+        <div class="flex items-center gap-2">
+          <label class="w-28 text-sm font-medium shrink-0">Date</label>
+          <p-datepicker [(ngModel)]="date" dateFormat="dd-mm-yy" class="flex-1" />
+        </div>
+
+        <div class="flex items-center gap-2">
+          <label class="w-28 text-sm font-medium shrink-0">Currency</label>
+          <p-select
+            [(ngModel)]="currencyId"
+            [options]="currencies()"
+            optionLabel="currency"
+            optionValue="id"
+            placeholder="Select"
+            class="flex-1"
+            [class.p-invalid]="submitted && !currencyId"
+            (onChange)="onCurrencyChange()"
+          />
+        </div>
+
+        <div class="flex items-center gap-2">
+          <label class="w-28 text-sm font-medium shrink-0">Warehouse</label>
+          <p-select
+            [(ngModel)]="warehouseId"
+            [options]="warehouses()"
+            optionLabel="description"
+            optionValue="id"
+            placeholder="Select"
+            class="flex-1"
+          />
+        </div>
+
+        <!-- Supplier row with two helpers -->
+        <div class="flex items-center gap-2">
+          <label class="w-28 text-sm font-medium shrink-0">Supplier</label>
+          <p-button
+            icon="pi pi-search"
+            [rounded]="true" [text]="true" severity="info" pTooltip="Search by Invoice No"
+            (onClick)="openInvoiceSearch()"
+            class="shrink-0"
+          />
+          <p-select
+            [(ngModel)]="supplierId"
+            [options]="suppliers()"
+            optionLabel="name"
+            optionValue="id"
+            placeholder="Select supplier"
+            [filter]="true"
+            filterBy="name,code"
+            class="flex-1"
+            [class.p-invalid]="submitted && !supplierId"
+            (onChange)="onSupplierChange()"
+          />
+          <p-button
+            icon="pi pi-user-plus"
+            [rounded]="true" [text]="true" severity="info" pTooltip="Search by Name"
+            (onClick)="openSupplierSearch()"
+            class="shrink-0"
+          />
+        </div>
+
+        <div class="flex items-center gap-2">
+          <label class="w-28 text-sm font-medium shrink-0">Remark</label>
+          <input pInputText [(ngModel)]="remark" class="flex-1" />
+        </div>
+      </div>
+
+      <!-- MIDDLE: payment methods -->
+      <div class="flex flex-col gap-2">
+        <div class="grid grid-cols-[auto_1fr_auto] items-center gap-x-2 gap-y-2">
+          <!-- Cash -->
+          <label class="text-sm font-medium text-right">Cash</label>
+          <p-inputnumber [(ngModel)]="cash" [minFractionDigits]="0" [maxFractionDigits]="2" class="w-full" />
+          <p-button label="Quick Pay" [text]="true" size="small" severity="secondary" (onClick)="applyQuickPay('cash')" />
+
+          <!-- Bank Transfer -->
+          <label class="text-sm font-medium text-right">Bank Transfer</label>
+          <p-inputnumber [(ngModel)]="bankTransfer" [minFractionDigits]="0" [maxFractionDigits]="2" class="w-full" />
+          <p-button label="Quick Pay" [text]="true" size="small" severity="secondary" (onClick)="applyQuickPay('bankTransfer')" />
+
+          <!-- Credit Card -->
+          <label class="text-sm font-medium text-right">Credit Card</label>
+          <p-inputnumber [(ngModel)]="creditCard" [minFractionDigits]="0" [maxFractionDigits]="2" class="w-full" />
+          <p-button label="Quick Pay" [text]="true" size="small" severity="secondary" (onClick)="applyQuickPay('creditCard')" />
+
+          <!-- Debit Card -->
+          <label class="text-sm font-medium text-right">Debit Card</label>
+          <p-inputnumber [(ngModel)]="debitCard" [minFractionDigits]="0" [maxFractionDigits]="2" class="w-full" />
+          <p-button label="Quick Pay" [text]="true" size="small" severity="secondary" (onClick)="applyQuickPay('debitCard')" />
+
+          <!-- Voucher -->
+          <label class="text-sm font-medium text-right">Voucher</label>
+          <p-inputnumber [(ngModel)]="voucher" [minFractionDigits]="0" [maxFractionDigits]="2" class="w-full" />
+          <p-button label="Quick Pay" [text]="true" size="small" severity="secondary" (onClick)="applyQuickPay('voucher')" />
+
+          <!-- Cheque -->
+          <label class="text-sm font-medium text-right">Cheque</label>
+          <p-inputnumber [(ngModel)]="cheque" [minFractionDigits]="0" [maxFractionDigits]="2" class="w-full" />
+          <p-button label="Quick Pay" [text]="true" size="small" severity="secondary" (onClick)="applyQuickPay('cheque')" />
+        </div>
+
+        <p-divider />
+
+        <div class="grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-2">
+          <label class="text-sm font-medium text-right">From Bank</label>
+          <p-select
+            [(ngModel)]="fromBankId"
+            [options]="banks()"
+            optionLabel="description"
+            optionValue="id"
+            placeholder="Select bank"
+            [showClear]="true"
+            class="w-full"
+          />
+
+          <label class="text-sm font-medium text-right">Cheque No</label>
+          <input pInputText [(ngModel)]="chequeNo" class="w-full" />
+
+          <label class="text-sm font-medium text-right">Cheque Date</label>
+          <p-datepicker [(ngModel)]="chequeDate" dateFormat="dd-mm-yy" class="w-full" />
+        </div>
+      </div>
+
+      <!-- RIGHT: totals -->
+      <div class="flex flex-col justify-start gap-3 pt-2">
+        <div class="bg-surface-100 rounded-lg p-4 flex flex-col gap-3">
+          <div class="flex justify-between items-center">
+            <span class="text-sm font-medium">Total Paid</span>
+            <span class="font-mono font-semibold text-lg">{{ totalPaid | number:'1.0-0' }}</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-sm font-medium">Invoice(s) value</span>
+            <span class="font-mono font-semibold text-lg">{{ invoicesValue | number:'1.0-0' }}</span>
+          </div>
+          <p-divider styleClass="my-1" />
+          <div class="flex justify-between items-center">
+            <span class="text-sm font-medium">Difference</span>
+            <span
+              class="font-mono font-bold text-lg"
+              [class.text-green-600]="difference === 0"
+              [class.text-red-600]="difference !== 0"
+            >{{ difference | number:'1.0-2' }}</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Invoice grid -->
+    <div>
+      <p-table
+        [value]="paymentLines()"
+        responsiveLayout="scroll"
+        styleClass="p-datatable-sm p-datatable-gridlines"
+        [scrollable]="true"
+        scrollHeight="320px"
+      >
+        <ng-template #header>
+          <tr>
+            <th style="min-width:130px">Invoice</th>
+            <th style="min-width:100px">Date</th>
+            <th style="min-width:100px">Due Date</th>
+            <th style="min-width:130px" class="text-right">Amount</th>
+            <th style="min-width:130px" class="text-right">Balance</th>
+            <th style="min-width:140px" class="text-right">Paid</th>
+            <th style="min-width:90px" class="text-center">Paid in Full</th>
+            <th style="min-width:130px">Remark</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-line>
+          <tr [class.bg-blue-50]="line.paid !== 0" [class.text-red-600]="isReturnInvoice(line)">
+            <td class="font-mono text-sm">{{ line.invoiceNo }}</td>
+            <td class="text-sm">{{ line.date }}</td>
+            <td class="text-sm">{{ line.dueDate }}</td>
+            <td class="text-right font-mono text-sm">{{ line.amount | number:'1.0-0' }}</td>
+            <td class="text-right font-mono text-sm">{{ line.balance | number:'1.0-0' }}</td>
+            <td class="text-right">
+              <p-inputnumber
+                [(ngModel)]="line.paid"
+                [minFractionDigits]="0" [maxFractionDigits]="2"
+                inputStyleClass="text-right w-full"
+                (ngModelChange)="onPaidChange(line)"
+              />
+            </td>
+            <td class="text-center">
+              <p-checkbox
+                [(ngModel)]="line.paidInFull"
+                [binary]="true"
+                (onChange)="onPaidInFullChange(line)"
+              />
+            </td>
+            <td>
+              <input pInputText [(ngModel)]="line.remark" class="w-full text-sm" />
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr><td colspan="8" class="text-center p-4 text-muted-color">Select a supplier and currency to load invoices.</td></tr>
+        </ng-template>
+      </p-table>
+
+      <!-- Sort + Check All -->
+      <div class="flex items-center justify-between mt-2">
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-muted-color">Sort by:</span>
+          <p-button
+            label="Invoice" size="small"
+            [outlined]="sortMode !== 'invoice'" [severity]="sortMode === 'invoice' ? 'primary' : 'secondary'"
+            (onClick)="setSortMode('invoice')"
+          />
+          <p-button
+            label="Date" size="small"
+            [outlined]="sortMode !== 'date'" [severity]="sortMode === 'date' ? 'primary' : 'secondary'"
+            (onClick)="setSortMode('date')"
+          />
+          <p-button
+            label="Due Date" size="small"
+            [outlined]="sortMode !== 'dueDate'" [severity]="sortMode === 'dueDate' ? 'primary' : 'secondary'"
+            (onClick)="setSortMode('dueDate')"
+          />
+        </div>
+        <div class="flex gap-2">
+          <p-button label="Uncheck All" size="small" severity="secondary" [outlined]="true" (onClick)="uncheckAll()" />
+          <p-button label="Check All" size="small" severity="primary" [outlined]="true" (onClick)="checkAll()" />
+        </div>
+      </div>
+    </div>
+
+  </div>
+</ng-template>
+
+    <ng-template #footer>
+        <div class="flex justify-end gap-2">
+            <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
+            <p-button label="Save" icon="pi pi-check" (click)="saveRecord()" />
+        </div>
+    </ng-template>
+</p-dialog>
+
+<!-- ── Invoice Search Dialog ────────────────────────────────────────────────── -->
+<p-dialog
+  [(visible)]="invoiceSearchVisible"
+  header="Search by Invoice No"
+  [modal]="true"
+  [style]="{ width: '380px' }"
+>
+  <div class="flex gap-2 items-center">
+    <input
+      pInputText
+      [(ngModel)]="invoiceSearchNo"
+      placeholder="Enter invoice number"
+      class="flex-1"
+      (input)="invoiceSearchNo = invoiceSearchNo.toUpperCase()"
+      (keyup.enter)="confirmInvoiceSearch()"
+    />
+    <p-button label="Search" icon="pi pi-search" (onClick)="confirmInvoiceSearch()" />
+  </div>
+</p-dialog>
+
+<!-- ── Supplier Name Search Dialog ──────────────────────────────────────────── -->
+<p-dialog
+  [(visible)]="supplierSearchVisible"
+  header="Search Supplier by Name"
+  [modal]="true"
+  [style]="{ width: '520px' }"
+>
+  <div class="flex gap-2 mb-3">
+    <input
+      pInputText
+      [(ngModel)]="supplierNameSearch"
+      placeholder="Enter first name, or first last name"
+      class="flex-1"
+      (keyup.enter)="runSupplierSearch()"
+    />
+    <p-button label="Search" icon="pi pi-search" (onClick)="runSupplierSearch()" />
+  </div>
+  <p-table
+    [value]="supplierSearchResults()"
+    styleClass="p-datatable-sm"
+    [scrollable]="true"
+    scrollHeight="300px"
+  >
+    <ng-template #header>
+      <tr>
+        <th>Code</th>
+        <th>Name</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-item>
+      <tr class="cursor-pointer hover:bg-surface-100" (click)="selectSupplierFromSearch(item)">
+        <td>{{ item.code }}</td>
+        <td>{{ item.name }}</td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr><td colspan="2" class="text-center p-3">No results.</td></tr>
+    </ng-template>
+  </p-table>
+</p-dialog>

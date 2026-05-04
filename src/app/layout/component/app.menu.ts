@@ -113,6 +113,11 @@ export class AppMenu {
                                 icon: 'pi pi-fw pi-arrows-h',
                                 routerLink: ['/app/transactions/goods-transfer']
                             },
+                            {
+                                label: 'Supplier Payment',
+                                icon: 'pi pi-fw pi-credit-card',
+                                routerLink: ['/app/transactions/supplier-payment']
+                            },
                         ]
                     },
                     {
